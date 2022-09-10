@@ -9,7 +9,21 @@ use JsonValue::Null;
 use json::{object::Iter, JsonValue};
 use reqwest::{Request, header};
 
-fn get_replies(element : &JsonValue) ->Vec<String>{
+#[derive(Debug)]
+struct Empty{
+ 
+}
+
+
+#[derive(Debug,PartialEq)]
+struct Element{
+  data : String,
+  author : String,
+  children : Vec<Element>,
+  
+}
+
+fn get_replies(element : &JsonValue) -> Result<Vec<String>,Empty>{
   let mut out = Vec::new();
     if element["replies"] != Null{
       // for x in element["replies"]["data"].entries(){
@@ -19,7 +33,7 @@ fn get_replies(element : &JsonValue) ->Vec<String>{
           //println!("{:?}",r["data"]);
          let r = &r["data"];
           //println!("{:?}",r);
-          let d = [&r["body"],&r["author"]];
+          let d = [&r["author"],&r["body"]];
           let mut data = String::new();
           for &x in d.iter(){
              if x.to_owned() != JsonValue::Null{
@@ -31,11 +45,21 @@ fn get_replies(element : &JsonValue) ->Vec<String>{
             }
             out.push(data);
 
-            out.append(&mut get_replies(r));
+            out.append(&mut match get_replies(r){
+              Ok(o)=>o,
+              _=>continue
+            });
 
         }
     }
-    out
+    if out.len() > 0 {Ok(out)} else {Err(Empty{})}
+}
+
+fn get_data(element : JsonValue,field : &str) -> Result<String,Empty>{
+  if element.to_owned() != JsonValue::Null && element[field] != JsonValue::Null{
+      return Ok(element[field].to_string())
+  }
+  Err(Empty{})
 }
 
 #[tokio::main]
@@ -66,6 +90,12 @@ async fn main(){
         //TODO: Fix layout, bcs its getting all the data, now only fix the reaptionships!!!
       let d = [&d["author"],&d["body"],&d["selftext"],&d["title"]];
         
+        // Element{
+        //   data : match get_data(d, "body"){
+
+        //   }
+        // };
+
         for &x in d.iter(){
            if x.to_owned() != JsonValue::Null{
            data.push(match x.as_str(){
@@ -75,7 +105,11 @@ async fn main(){
               println!("{}",data.pop().unwrap());
             }
           }
-          println!("{:?}",get_replies(&dc));
+          match get_replies(&dc){
+            Ok(o)=>println!("{:?}",o),
+            _=>{}
+          }
+          // println!("{:?}",.unwrap());
           
     }
    }
