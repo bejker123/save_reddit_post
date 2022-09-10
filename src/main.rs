@@ -31,11 +31,11 @@ impl Element{
         Ok(o)=>o,
         _=>String::new()
       },
-      data : match get_data(data, "title"){
+      data : match get_data(data, "body"){
           Ok(o)=>o,
-          _=> match get_data(data,"body"){
+          _=> match get_data(data,"selftext"){
               Ok(o)=>o,
-              _=>match get_data(data,"selftext"){
+              _=>match get_data(data,"title"){//TODO: fix error, when a post has text the title doesn't get saved!
                 Ok(o)=>o,
                 _=>String::new()
               }
