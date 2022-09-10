@@ -13,12 +13,17 @@ struct Empty{
 }
 
 
+//TODO: add better debug formatting
 #[derive(Debug,PartialEq)]
 struct Element{
   author : String,
   data : String,
-  children : Vec<Element>,
+  kind : String,
+  post_hint : String,
+  url: String,//url_overridden_by_dest
   ups : usize,
+  children : Vec<Element>,
+ 
 }
 
 impl Element{
@@ -51,12 +56,26 @@ impl Element{
           _=>0
         },
         _=>0
-      }
+      },
+      post_hint : match get_data(data, "post_hint"){
+        Ok(o)=>o,
+        _=>String::new()
+      },
+      url : match get_data(data, "url_overridden_by_dest"){
+        Ok(o)=>o,
+        _=>String::new()
+      },
+      //a hacky way, but "kind" attribute is higher in the json tree so it would be a pain in the butt to get it that way
+      kind : match get_data(data, "name"){
+        Ok(o)=>o[0..2].to_owned(),
+        _=>String::new()
+      },
+
     })
   }
 
   pub fn empty() -> Element{
-    Element { author:String::new(), data: String::new(), children: Vec::<Element>::new(), ups: 0 }
+    Element { author:String::new(), data: String::new(), children: Vec::<Element>::new(), ups: 0,post_hint:String::new(),url: String::new(),kind: String::new() }
   }
 }
 
@@ -105,16 +124,19 @@ async fn main(){
     url = url[0..url.len()-1].to_string();
   }
 
-  url += ".json";
+  if !url.ends_with(".json"){
+    url += ".json";
+  } 
 
+    //TODO: add better handling than unwrap()
     let client = reqwest::Client::new();
-//TODO: add better handling than unwrap()
-    //let res = client.get("https://www.reddit.com/r/redditdev/comments/b8yd3r/reddit_api_possible_to_get_posts_by_id.json")
     let res = client.get(url)
     .send().await.unwrap()
     .text().await.unwrap();
 
   let j = json::parse(&res.clone()).unwrap();
+
+  std::fs::write("tmp.json", j.pretty(1));
 
   let mut elements = Vec::<Element>::new();
 
@@ -124,30 +146,15 @@ async fn main(){
 
       let data = y["data"].clone();
 
-      //let dc = d.clone();
-      //for x in d.entries(){
-       // println!("{:?}",x);
-      //}
-      //println!("{:?}",&d["replies"]);
-      
         //TODO: Fix layout, bcs its getting all the data, now only fix the reaptionships!!!
         match Element::create(&data){
             Ok(o)=>elements.push(o),
             _=>elements.push(Element::empty())
         }
-
-          // match get_replies(&dc){
-          //   Ok(o)=>println!("{:?}",o),
-          //   _=>{}
-          // }
-          // println!("{:?}",.unwrap());
           
     }
    }
 
    std::fs::write("essa",format!("{:#?}",elements));
-
-  // println!("{:#?}",data);
-
     
 }
