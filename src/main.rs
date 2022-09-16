@@ -1,4 +1,3 @@
-extern crate dotenv;
 extern crate tokio;
 extern crate reqwest;
 extern crate json;
@@ -126,13 +125,57 @@ fn get_replies(element : &JsonValue) -> Result<Vec<Element>,Empty>{
     if out.len() > 0 {Ok(out)} else {Err(Empty{})}
 }
 
+static mut ELEMENTS_COUNT : u128 = 0;
+
 fn get_data(element : &JsonValue,field : &str) -> Result<String,Empty>{
   if element[field] != JsonValue::Null{
+    unsafe {ELEMENTS_COUNT+=1;}
       return Ok(element[field].to_string())
   }
   Err(Empty{})
 }
 
+fn parse_url(mut url : String)->String{
+
+  url = match url.strip_suffix("\n"){
+    Some(o)=>o.to_string(),
+    _=>url
+};
+
+  url = match url.strip_suffix("?"){
+    Some(o)=>o.to_string(),
+    _=>url
+};
+
+  // url = match url.find("?"){
+  //     Some(q_idx)=>url[0..q_idx].to_string(),
+  //     _=>url
+  // };
+  
+  let search_for = "://";
+
+  let start_idx = match url.find(search_for){
+      Some(o)=>o+search_for.len(),
+      _=>0
+  };
+
+  url = match url[start_idx..].rfind(":"){
+    Some(q_idx)=>url[0..q_idx+start_idx].to_string(),
+    _=>url
+  };
+  
+
+  if url.ends_with("/"){
+    url = url[0..url.len()-1].to_string();
+  }
+  
+
+  if !url.ends_with(".json"){
+    url += ".json";
+  } 
+  
+  url
+}
 
 #[tokio::main]
 async fn main(){
@@ -150,13 +193,7 @@ async fn main(){
     std::io::stdin().read_line(&mut url).unwrap();
   }
 
-  if url.ends_with("/"){
-    url = url[0..url.len()-1].to_string();
-  }
-
-  if !url.ends_with(".json"){
-    url += ".json";
-  } 
+  let url = parse_url(url);
 
     //TODO: add better handling than unwrap()
     let client = reqwest::Client::new();
@@ -166,7 +203,7 @@ async fn main(){
 
   let j = json::parse(&res.clone()).unwrap();
 
-  std::fs::write("tmp.json", j.pretty(1)).unwrap();
+  std::fs::write("tmp.json.tmp", j.pretty(1)).unwrap();
 
   let mut elements = Vec::<Element>::new();
 
@@ -185,6 +222,8 @@ async fn main(){
     }
    }
 
-   std::fs::write("essa",format!("{:#?}",elements)).unwrap();
+   std::fs::write("temp.tmp",format!("{:#?}",elements)).unwrap();
+   
+  unsafe{ println!("Successfully got {} element{}!", ELEMENTS_COUNT,if ELEMENTS_COUNT == 1 {""} else {"s"})};
     
 }
