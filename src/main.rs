@@ -14,7 +14,7 @@ struct Empty{
 
 
 //TODO: add better debug formatting
-#[derive(Debug,PartialEq)]
+#[derive(PartialEq)]
 struct Element{
   author : String,
   data : String,
@@ -24,6 +24,36 @@ struct Element{
   ups : usize,
   children : Vec<Element>,
  
+}
+
+impl std::fmt::Debug for Element{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        //f.debug_struct("Element").field("author", &self.author).field("data", &self.data).field("kind", &self.kind).field("post_hint", &self.post_hint).field("url", &self.url).field("ups", &self.ups).field("children", &self.children).finish()
+        f.write_str(&format!("{{,\"author\": \"{}\",",self.author));
+        if self.data.len() > 0{
+           f.write_str(&format!("\"data\": \"{}\",",self.data));
+        }
+        if self.kind.len() > 0{
+          f.write_str(&format!("\"kind\": \"{}\",",self.kind));
+       }  
+       if self.post_hint.len() > 0{
+          f.write_str(&format!("\"post_hint\": \"{}\",",self.post_hint));
+       }
+       if self.url.len() > 0{
+        f.write_str(&format!("\"url\": \"{}\",",self.url));
+        }
+
+        if self.ups != 0{
+          f.write_str(&format!("\"ups\": \"{}\",",self.ups));
+       }
+
+       if self.children.len() > 0{
+        f.write_str(&format!("\"children\": \"{:#?}\",",self.children));
+     }
+
+
+        f.write_str("}")
+      }
 }
 
 impl Element{
@@ -116,8 +146,8 @@ async fn main(){
   }
   else{
     print!("URL: ");
-    std::io::stdout().flush();
-    std::io::stdin().read_line(&mut url);
+    std::io::stdout().flush().unwrap();
+    std::io::stdin().read_line(&mut url).unwrap();
   }
 
   if url.ends_with("/"){
@@ -136,7 +166,7 @@ async fn main(){
 
   let j = json::parse(&res.clone()).unwrap();
 
-  std::fs::write("tmp.json", j.pretty(1));
+  std::fs::write("tmp.json", j.pretty(1)).unwrap();
 
   let mut elements = Vec::<Element>::new();
 
@@ -155,6 +185,6 @@ async fn main(){
     }
    }
 
-   std::fs::write("essa",format!("{:#?}",elements));
+   std::fs::write("essa",format!("{:#?}",elements)).unwrap();
     
 }
