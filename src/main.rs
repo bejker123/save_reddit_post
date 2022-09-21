@@ -69,11 +69,9 @@ impl Element {
             },
             data: match get_data(data, "body") {
                 Ok(o) => o,
-                _ => match get_data(data, "selftext") {
+                _ => match get_data(data, "title") {
                     Ok(o) => o,
-                    _ => match get_data(data, "title") {
-                        //TODO: fix error, when a post has text the title doesn't get saved!
-                        //debug this, but this is most likeley fixed.
+                    _ => match get_data(data, "selftext") {
                         Ok(o) => o,
                         _ => String::new(),
                     },
