@@ -27,26 +27,12 @@ struct Element {
 
 impl std::fmt::Debug for Element {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // f.debug_struct("Element")
-        // .field("author", &self.author)
-        // .field("data", &self.data)
-        // .field("kind", &self.kind)
-        // .field("post_hint", &self.post_hint)
-        // .field("url", &self.url)
-        // .field("ups", &self.ups)
-        // .field("created_utc", &self.created_utc)
-        // .field("depth", &self.depth)
-
-        // .field("children", &self.children)
-        // .finish()
-
         let mut children = String::new();
 
         for child in &self.children {
             children += &format!("{:?}", child);
         }
 
-        // let children = format!("{:?}",self.children).replace("[", "\n").replace("]", "").replace(",", "");
         if self.data != "" || self.author != "" {
             let indent_char = "-";
             //let secondary_indent_char = " ";
@@ -59,8 +45,7 @@ impl std::fmt::Debug for Element {
                 self.data.replace(
                     "\n",
                     &(String::from("\n")
-                        + &(indent.to_string() + &indent_char.repeat(self.author.len() + 4)))
-                            //.replace(indent_char, secondary_indent_char))
+                        + &(indent.to_string() + &indent_char.repeat(self.author.len() + 4))) //.replace(indent_char, secondary_indent_char))
                 ),
                 children
             ));
@@ -69,36 +54,6 @@ impl std::fmt::Debug for Element {
     }
 }
 
-// impl std::fmt::Debug for Element{
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//        // f.debug_struct("Element").field("author", &self.author).field("data", &self.data).field("kind", &self.kind).field("post_hint", &self.post_hint).field("url", &self.url).field("ups", &self.ups).field("children", &self.children).finish()
-//         f.
-//         // for x in list_members!(self){
-//         // }
-//     //     f.write_str(&format!("{{\"author\": \"{}\",",self.author)).unwrap();
-//     //     if self.data.len() > 0{
-//     //        f.write_str(&format!("\"data\": \"{}\",",self.data)).unwrap();
-//     //     }
-//     //     if self.kind.len() > 0{
-//     //       f.write_str(&format!("\"kind\": \"{}\",",self.kind)).unwrap();
-//     //    }
-//     //    if self.post_hint.len() > 0{
-//     //       f.write_str(&format!("\"post_hint\": \"{}\",",self.post_hint)).unwrap();
-//     //    }
-//     //    if self.url.len() > 0{
-//     //     f.write_str(&format!("\"url\": \"{}\",",self.url)).unwrap();
-//     //     }
-//     //     if self.ups != 0{
-//     //       f.write_str(&format!("\"ups\": \"{}\",",self.ups)).unwrap();
-//     //    }
-//     //    if self.children.len() > 0{
-//     //     f.write_str(&format!("\"children\": \"{:#?}\",",self.children)).unwrap();
-//     //  }
-//     //   f.write_fmt(format_args!("{{\"author\": \"{}\",\"data\": \"{}\",\"kind\": \"{}\",\"post_hint\": \"{}\","));
-//        //f.write_str(stringify!(self))
-//       }
-// }
-
 impl Element {
     pub fn create(data: &JsonValue) -> Result<Element, Empty> {
         if data.to_owned() == JsonValue::Null {
@@ -106,7 +61,7 @@ impl Element {
         }
         unsafe {
             ELEMENTS_COUNT += 1;
-        } 
+        }
         Ok(Element {
             author: match get_data(data, "author") {
                 Ok(o) => o,
@@ -204,13 +159,14 @@ fn get_data(element: &JsonValue, field: &str) -> Result<String, Empty> {
 }
 
 fn parse_url(mut url: String) -> String {
-    url = match url.strip_suffix("\n") {
-        Some(o) => o.to_string(),
-        _ => url,
-    };
+    url = url.replace("\"", "");
+    url = url.replace(" ", "");
+    url = url.replace("\n", "");
+    
+    let search_for = "?";
 
-    url = match url.strip_suffix("?") {
-        Some(o) => o.to_string(),
+    url = match url.rfind(search_for) {
+        Some(idx) => url[0..idx].to_string(),
         _ => url,
     };
 
@@ -239,8 +195,6 @@ fn parse_url(mut url: String) -> String {
 
 #[tokio::main]
 async fn main() {
-    // let x = Element::empty();
-
     let mut url = String::new();
 
     let args: Vec<String> = std::env::args().collect();
@@ -257,9 +211,17 @@ async fn main() {
 
     //TODO: add better handling than unwrap()
     let client = reqwest::Client::new();
-    let res = client.get(url).send().await.unwrap().text().await.unwrap();
+    let res = match client.get(url).send().await {
+        Ok(o) => o,
+        _ => todo!(), //add restarting
+    };
 
-    let j = json::parse(&res.clone()).unwrap();
+    let text = match res.text().await {
+        Ok(o) => o,
+        _ => todo!(), //add restarting
+    };
+
+    let j = json::parse(&text.clone()).unwrap();
 
     std::fs::write("tmp.json.tmp", j.pretty(1)).unwrap();
 
@@ -276,17 +238,23 @@ async fn main() {
         }
     }
 
-    //std::fs::write("temp.tmp",format!("{:?}",elements)).unwrap();
+    unsafe {
+        if ELEMENTS_COUNT == 0 {
+            panic!("Error, returned 0 elements!");
+        }
+    }
 
     let mut file = std::fs::OpenOptions::new()
         .write(true)
         .truncate(true)
-        //.append(true)
         .open("temp.tmp")
         .unwrap();
 
     for elem in elements {
-        file.write_fmt(format_args!("{:?}", elem));
+        match file.write_fmt(format_args!("{:?}", elem)) {
+            Ok(()) => {}
+            Err(e) => panic!("Failed to save file!\nError: {}", e),
+        }
     }
 
     unsafe {
