@@ -1,5 +1,5 @@
 [package]
-name = "save_reddit_post"
+name = "srp" #save_reddit_post
 version = "0.1.0"
 edition = "2021"
 

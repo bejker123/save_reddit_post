@@ -13,11 +13,10 @@ async fn main() {
     
     let cli = CLI::new();
 
-    //TODO: add better handling than unwrap()
     let client = reqwest::Client::new();
     let res = match client.get(cli.url).send().await {
         Ok(o) => o,
-        _ => todo!(), //add restarting
+        Err(e) => panic!("{}",e), //add restarting
     };
 
     let text = match res.text().await {
@@ -27,7 +26,7 @@ async fn main() {
 
     let j = json::parse(&text.clone()).unwrap();
 
-    std::fs::write("tmp.json.tmp", j.pretty(1)).unwrap();
+    std::fs::write("raw.json.tmp", j.pretty(1)).unwrap();
 
     let elements = Element::init(&j);
 
@@ -37,11 +36,16 @@ async fn main() {
         }
     }
 
-    let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open("temp.tmp")
-        .unwrap();
+    let mut file : Box<dyn Write> = Box::new(std::io::stdout());
+
+    if cli.save_to_file{
+        file = Box::new(std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(cli.save_path)
+            .unwrap());
+    }
 
     for elem in elements {
         match file.write_fmt(format_args!("{:?}", elem)) {
@@ -49,7 +53,7 @@ async fn main() {
             Err(e) => panic!("Failed to save file!\nError: {}", e),
         }
     }
-
+   
     unsafe {
         println!(
             "Successfully got {} element{}!",

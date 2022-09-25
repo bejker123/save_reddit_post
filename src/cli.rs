@@ -2,24 +2,67 @@ use std::io::Write;
 
 pub struct CLI{
     pub url : String,
+    pub save_to_file : bool,
+    pub save_path : String,
+
 }
 
 impl CLI{
+
+    fn help(invalid_usage : bool){
+        if invalid_usage{
+            println!("Invalid usage!")
+        }
+        println!("Usage:");
+        println!("srp <arguments> <url>");
+        println!("Valid arguments:");
+        println!(" -h/--help display this help");
+        println!(" -s/--save specify save path(output.tmp by default)");
+        println!(" -o/--output don't save to file just output to stdout");
+
+        std::process::exit(invalid_usage as i32);
+    }
+
     pub fn new() -> CLI{
         let mut url = String::new();
+        let mut save_to_file =  true;
+        let mut save_path = String::from("output.tmp");
 
         let args: Vec<String> = std::env::args().collect();
 
-        if args.len() >= 2 {
+        if args.len() == 1{
+            Self::help(true);   
+        }
+        else if args.len() == 2 {
             url = args[1].clone();
         } else {
-            print!("URL: ");
-            std::io::stdout().flush().unwrap();
-            std::io::stdin().read_line(&mut url).unwrap();
+
+            let mut skip_count = 0u32;
+
+            for i in 1..args.len()-1{
+                if skip_count > 0{
+                    skip_count -= 1;
+                    continue;
+                }
+                match args[i].as_str(){
+                    "-s"|"--save"=>{
+                        if args.len() < i+1{
+                            Self::help(true);
+                        }
+                        skip_count += 1;
+                        save_path = args[i+1].clone();
+                    },
+                    "-o"|"--output"=>{
+                        save_to_file = false;
+                    },
+                    _=>{println!("Invalid argument: {}",args[i])}
+                }
+            }
+            url = Self::parse_url(args[args.len()-1].to_owned());
         }
 
         let url = CLI::parse_url(url);
-        CLI{url}
+        CLI{url,save_to_file,save_path}
     }
 
     fn parse_url(mut url: String) -> String {

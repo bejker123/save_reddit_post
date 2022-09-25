@@ -38,9 +38,10 @@ impl std::fmt::Debug for Element {
             //let secondary_indent_char = " ";
             let indent = indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
             return f.write_fmt(format_args!(
-                "{}{} {}: {}\n{}",
+                "{}{} {} {}: {}\n{}",
                 indent,
                 self.depth,
+                self.ups,
                 self.author,
                 self.data.replace(
                     "\n",
