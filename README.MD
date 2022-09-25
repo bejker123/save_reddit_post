@@ -4,7 +4,8 @@
 
 ## Installation
 
-Simply clone this repository:
+First make sure you have [rust](https://www.rust-lang.org/tools/install) installed.
+Then simply clone this repository:
 
 ```bash
 git clone https://github.com/bejker123/save_reddit_post
