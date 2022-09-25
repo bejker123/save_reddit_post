@@ -34,7 +34,12 @@ impl CLI{
             Self::help(true);   
         }
         else if args.len() == 2 {
-            url = args[1].clone();
+            if args[1] == "-h" || args[1] == "--help"{
+                Self::help(false);
+            }
+            else{
+                url = args[1].clone();
+            }
         } else {
 
             let mut skip_count = 0u32;
@@ -45,6 +50,9 @@ impl CLI{
                     continue;
                 }
                 match args[i].as_str(){
+                    "-h"|"--help"=>{
+                        Self::help(false);
+                    },
                     "-s"|"--save"=>{
                         if args.len() < i+1{
                             Self::help(true);
