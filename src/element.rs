@@ -1,7 +1,7 @@
 extern crate json;
 extern crate reqwest;
 
-use std::str::FromStr;
+use std::{str::FromStr};
 
 use json::JsonValue;
 use JsonValue::Null;
@@ -34,9 +34,11 @@ impl std::fmt::Debug for Element {
         }
 
         if self.data != "" || self.author != "" {
-            let indent_char = "-";
+            let indent_char = " ";
             //let secondary_indent_char = " ";
             let indent = indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
+            let ups_indent = indent_char.repeat(self.ups.to_string().len());
+            //TODO: make this more readable
             return f.write_fmt(format_args!(
                 "{}{} {} {}: {}\n{}",
                 indent,
@@ -46,7 +48,7 @@ impl std::fmt::Debug for Element {
                 self.data.replace(
                     "\n",
                     &(String::from("\n")
-                        + &(indent.to_string() + &indent_char.repeat(self.author.len() + 4))) //.replace(indent_char, secondary_indent_char))
+                        + &(indent.to_string() + &indent_char.repeat(self.author.len() + 4) + &ups_indent + " ")) //.replace(indent_char, secondary_indent_char))
                 ),
                 children
             ));

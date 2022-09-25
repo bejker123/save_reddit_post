@@ -1,5 +1,3 @@
-use std::io::Write;
-
 pub struct CLI{
     pub url : String,
     pub save_to_file : bool,
