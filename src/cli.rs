@@ -71,7 +71,7 @@ impl CLI{
         CLI{url,save_to_file,save_path}
     }
 
-    fn parse_url(mut url: String) -> String {
+    pub fn parse_url(mut url: String) -> String {
         url = url.replace("\"", "");
         url = url.replace(" ", "");
         url = url.replace("\n", "");

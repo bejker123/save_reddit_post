@@ -6,6 +6,8 @@ use element::*;
 mod cli;
 use cli::*;
 
+mod tests;
+
 use std::io::Write;
 
 #[tokio::main]
