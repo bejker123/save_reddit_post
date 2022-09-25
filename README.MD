@@ -22,6 +22,10 @@ cargo run -- #pass arguments after "--"
 #for help use -h/--help argument
 ```
 
+## Note
+Please note that this repo is in its early stages.
+It will go through many changes in the future!
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
