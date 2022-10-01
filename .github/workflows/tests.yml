@@ -6,6 +6,8 @@ jobs:
     steps:
       - name: Install cargo
         run: |
+          sudo apt-get update
+          sudo apt-get upgrade
           sudo apt-get install cargo
       - name: Check out repository code
         uses: actions/checkout@v3
