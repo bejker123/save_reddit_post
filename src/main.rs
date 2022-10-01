@@ -8,11 +8,11 @@ use cli::*;
 
 mod tests;
 
-use std::io::Write;
+use std::{io::Write, time::SystemTime};
 
 #[tokio::main]
 async fn main() {
-    
+    let start = SystemTime::now();
     let cli = CLI::new();
 
     let client = reqwest::Client::new();
@@ -25,10 +25,13 @@ async fn main() {
         Ok(o) => o,
         _ => todo!(), //add restarting
     };
-
+    println!("Downloaded content in {} ms",start.elapsed().unwrap().as_millis());
     let j = json::parse(&text.clone()).unwrap();
 
+    let start = SystemTime::now();
     std::fs::write("raw.json.tmp", j.pretty(1)).unwrap();
+    println!("Written to file in {} ms",start.elapsed().unwrap().as_millis());
+    let start = std::time::SystemTime::now();
 
     let elements = Element::init(&j);
 
@@ -57,10 +60,11 @@ async fn main() {
     }
    
     unsafe {
-        println!(
-            "Successfully got {} element{}!",
+        print!(
+            "Successfully got {} element{}",
             ELEMENTS_COUNT,
             if ELEMENTS_COUNT == 1 { "" } else { "s" }
-        )
+        );
     };
+    println!(", in {} ms",start.elapsed().unwrap().as_millis());
 }

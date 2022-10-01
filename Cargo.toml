@@ -5,6 +5,11 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[profile.release]
+opt-level = 3
+debug = 0
+debug-assertions = false
+
 [dependencies]
 reqwest="0.11.11"
 tokio = { version="1", features = ["full"]}
