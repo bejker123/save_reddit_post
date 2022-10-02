@@ -12,8 +12,9 @@ use std::{io::Write, time::SystemTime};
 
 #[tokio::main]
 async fn main() {
+    let args: Vec<String> = std::env::args().collect();
     let start = SystemTime::now();
-    let cli = CLI::new();
+    let cli = CLI::new(args);
 
     let client = reqwest::Client::new();
     let res = match client.get(cli.url).send().await {

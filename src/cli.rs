@@ -1,3 +1,4 @@
+#[derive(PartialEq,Debug)]
 pub struct CLI{
     pub url : String,
     pub save_to_file : bool,
@@ -8,9 +9,7 @@ pub struct CLI{
 impl CLI{
 
     fn help(invalid_usage : bool){
-        if invalid_usage{
-            println!("Invalid usage!")
-        }
+        
         println!("Usage:");
         println!("srp <arguments> <url>");
         println!("Valid arguments:");
@@ -18,15 +17,19 @@ impl CLI{
         println!(" -s/--save specify save path(output.tmp by default)");
         println!(" -o/--output don't save to file just output to stdout");
 
-        std::process::exit(invalid_usage as i32);
+        if invalid_usage{
+            panic!("Invalid usage!")
+        }else{
+            if !cfg!(test) {
+                std::process::exit(invalid_usage as i32);
+            }
+        }
     }
 
-    pub fn new() -> CLI{
+    pub fn new(args: Vec<String> ) -> CLI{
         let mut url = String::new();
         let mut save_to_file =  true;
         let mut save_path = String::from("output.tmp");
-
-        let args: Vec<String> = std::env::args().collect();
 
         if args.len() == 1{
             Self::help(true);   
