@@ -1,3 +1,4 @@
+https://github.com/bejker123/save_reddit_post/actions/workflows/tests.yml/badge.svg
 # SRP
 
 **Save Reddit Post** is a program made to easily save any reddit post, without any authentication. 
