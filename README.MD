@@ -1,5 +1,6 @@
+![Build Badge](https://github.com/bejker123/save_reddit_post/actions/workflows/build.yml/badge.svg)
 ![Tests Badge](https://github.com/bejker123/save_reddit_post/actions/workflows/tests.yml/badge.svg)
-![Building Badge](https://github.com/bejker123/save_reddit_post/actions/workflows/building.yml/badge.svg)
+
 # SRP
 
 **Save Reddit Post** is a program made to easily save any reddit post, without any authentication. 
