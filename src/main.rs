@@ -19,19 +19,25 @@ async fn main() {
     let client = reqwest::Client::new();
     let res = match client.get(cli.url).send().await {
         Ok(o) => o,
-        Err(e) => panic!("{}",e), //add restarting
+        Err(e) => panic!("{}", e), //add restarting
     };
 
     let text = match res.text().await {
         Ok(o) => o,
         _ => todo!(), //add restarting
     };
-    println!("Downloaded content in {} ms",start.elapsed().unwrap().as_millis());
+    println!(
+        "Downloaded content in {} ms",
+        start.elapsed().unwrap().as_millis()
+    );
     let j = json::parse(&text).unwrap();
 
     let start = SystemTime::now();
     std::fs::write("raw.json.tmp", j.pretty(1)).unwrap();
-    println!("Written to file in {} ms",start.elapsed().unwrap().as_millis());
+    println!(
+        "Written to file in {} ms",
+        start.elapsed().unwrap().as_millis()
+    );
     let start = std::time::SystemTime::now();
 
     let elements = Element::init(&j);
@@ -42,15 +48,17 @@ async fn main() {
         }
     }
 
-    let mut file : Box<dyn Write> = Box::new(std::io::stdout());
+    let mut file: Box<dyn Write> = Box::new(std::io::stdout());
 
-    if cli.save_to_file{
-        file = Box::new(std::fs::OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(cli.save_path)
-            .unwrap());
+    if cli.save_to_file {
+        file = Box::new(
+            std::fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .open(cli.save_path)
+                .unwrap(),
+        );
     }
 
     for elem in elements {
@@ -59,7 +67,7 @@ async fn main() {
             Err(e) => panic!("Failed to save file!\nError: {}", e),
         }
     }
-   
+
     unsafe {
         print!(
             "Successfully got {} element{}",
@@ -67,5 +75,5 @@ async fn main() {
             if ELEMENTS_COUNT == 1 { "" } else { "s" }
         );
     };
-    println!(", in {} ms",start.elapsed().unwrap().as_millis());
+    println!(", in {} ms", start.elapsed().unwrap().as_millis());
 }

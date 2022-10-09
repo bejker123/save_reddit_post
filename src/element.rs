@@ -1,7 +1,7 @@
 extern crate json;
 extern crate reqwest;
 
-use std::{str::FromStr};
+use std::str::FromStr;
 
 use json::JsonValue;
 use JsonValue::Null;
@@ -33,7 +33,7 @@ impl std::fmt::Debug for Element {
             children += &format!("{:?}", child);
         }
 
-        if !self.data.is_empty()|| !self.author.is_empty() {
+        if !self.data.is_empty() || !self.author.is_empty() {
             let indent_char = " ";
             //let secondary_indent_char = " ";
             let indent = indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
@@ -48,7 +48,10 @@ impl std::fmt::Debug for Element {
                 self.data.replace(
                     '\n',
                     &(String::from('\n')
-                        + &(indent.to_string() + &indent_char.repeat(self.author.len() + 4) + &ups_indent + " ")) //.replace(indent_char, secondary_indent_char))
+                        + &(indent.to_string()
+                            + &indent_char.repeat(self.author.len() + 4)
+                            + &ups_indent
+                            + " ")) //.replace(indent_char, secondary_indent_char))
                 ),
                 children
             ));
@@ -130,13 +133,13 @@ impl Element {
         }
     }
 
-    pub fn init(data: &JsonValue) -> Vec<Element>{
+    pub fn init(data: &JsonValue) -> Vec<Element> {
         let mut elements = Vec::<Element>::new();
 
         for x in data.members() {
             for y in x["data"]["children"].members() {
                 let data = y["data"].clone();
-    
+
                 match Element::create(&data) {
                     Ok(o) => elements.push(o),
                     _ => elements.push(Element::empty()),
@@ -154,7 +157,7 @@ impl Element {
                     Ok(o) => o,
                     _ => continue,
                 };
-    
+
                 out.push(element);
             }
         }
@@ -164,7 +167,7 @@ impl Element {
             Err(Empty {})
         }
     }
-    
+
     fn get_data(element: &JsonValue, field: &str) -> Result<String, Empty> {
         if element[field] != JsonValue::Null {
             return Ok(element[field].to_string());
