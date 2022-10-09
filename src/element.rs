@@ -33,7 +33,7 @@ impl std::fmt::Debug for Element {
             children += &format!("{:?}", child);
         }
 
-        if self.data != "" || self.author != "" {
+        if !self.data.is_empty()|| !self.author.is_empty() {
             let indent_char = " ";
             //let secondary_indent_char = " ";
             let indent = indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
@@ -46,20 +46,20 @@ impl std::fmt::Debug for Element {
                 self.ups,
                 self.author,
                 self.data.replace(
-                    "\n",
-                    &(String::from("\n")
+                    '\n',
+                    &(String::from('\n')
                         + &(indent.to_string() + &indent_char.repeat(self.author.len() + 4) + &ups_indent + " ")) //.replace(indent_char, secondary_indent_char))
                 ),
                 children
             ));
         }
-        return Ok(());
+        Ok(())
     }
 }
 
 impl Element {
     pub fn create(data: &JsonValue) -> Result<Element, Empty> {
-        if data.to_owned() == JsonValue::Null {
+        if *data == JsonValue::Null {
             return Err(Empty {});
         }
         unsafe {
@@ -158,7 +158,7 @@ impl Element {
                 out.push(element);
             }
         }
-        if out.len() > 0 {
+        if !out.is_empty() {
             Ok(out)
         } else {
             Err(Empty {})

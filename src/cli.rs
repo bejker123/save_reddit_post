@@ -1,4 +1,6 @@
-#[derive(PartialEq,Debug)]
+#![allow(dead_code)]
+//Allow this, bcs when running tests compiler throws a dead code warning which is not true.
+#[derive(PartialEq,Eq,Debug)]
 pub struct CLI{
     pub url : String,
     pub save_to_file : bool,
@@ -7,7 +9,6 @@ pub struct CLI{
 }
 
 impl CLI{
-
     fn help(invalid_usage : bool){
         
         println!("Usage:");
@@ -18,11 +19,9 @@ impl CLI{
         println!(" -o/--output don't save to file just output to stdout");
 
         if invalid_usage{
-            panic!("Invalid usage!")
-        }else{
-            if !cfg!(test) {
-                std::process::exit(invalid_usage as i32);
-            }
+            println!("Invalid usage!")
+        }else if !cfg!(test) {
+            std::process::exit(invalid_usage as i32);
         }
     }
 
@@ -75,11 +74,11 @@ impl CLI{
     }
 
     pub fn parse_url(mut url: String) -> String {
-        url = url.replace("\"", "");
-        url = url.replace(" ", "");
-        url = url.replace("\n", "");
+        url = url.replace('\'', "");
+        url = url.replace(' ', "");
+        url = url.replace('\n', "");
         
-        let search_for = "?";
+        let search_for = '?';
     
         url = match url.rfind(search_for) {
             Some(idx) => url[0..idx].to_string(),
@@ -93,12 +92,12 @@ impl CLI{
             _ => 0,
         };
     
-        url = match url[start_idx..].rfind(":") {
+        url = match url[start_idx..].rfind(':') {
             Some(q_idx) => url[0..q_idx + start_idx].to_string(),
             _ => url,
         };
     
-        if url.ends_with("/") {
+        if url.ends_with('/') {
             url = url[0..url.len() - 1].to_string();
         }
     

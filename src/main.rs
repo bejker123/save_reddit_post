@@ -27,7 +27,7 @@ async fn main() {
         _ => todo!(), //add restarting
     };
     println!("Downloaded content in {} ms",start.elapsed().unwrap().as_millis());
-    let j = json::parse(&text.clone()).unwrap();
+    let j = json::parse(&text).unwrap();
 
     let start = SystemTime::now();
     std::fs::write("raw.json.tmp", j.pretty(1)).unwrap();
