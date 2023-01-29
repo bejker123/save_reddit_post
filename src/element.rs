@@ -162,10 +162,9 @@ impl Element {
             }
         }
         if !out.is_empty() {
-            Ok(out)
-        } else {
-            Err(Empty {})
-        }
+            return Ok(out)
+        } 
+        Err(Empty {})
     }
 
     fn get_data(element: &JsonValue, field: &str) -> Result<String, Empty> {

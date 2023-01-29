@@ -19,28 +19,28 @@ async fn main() {
     let client = reqwest::Client::new();
     let res = match client.get(cli.url).send().await {
         Ok(o) => o,
-        Err(e) => panic!("{}", e), //add restarting
+        Err(e) => panic!("{}", e), //TODO: add restarting
     };
 
-    let text = match res.text().await {
+    let data = match res.text().await {
         Ok(o) => o,
-        _ => todo!(), //add restarting
+        _ => todo!(), //TODO: add restarting
     };
     println!(
         "Downloaded content in {} ms",
         start.elapsed().unwrap().as_millis()
     );
-    let j = json::parse(&text).unwrap();
+    let json_data = json::parse(&data).unwrap();
 
     let start = SystemTime::now();
-    std::fs::write("raw.json.tmp", j.pretty(1)).unwrap();
+    std::fs::write("raw.json.tmp", json_data.pretty(1)).unwrap();
     println!(
         "Written to file in {} ms",
         start.elapsed().unwrap().as_millis()
     );
     let start = std::time::SystemTime::now();
 
-    let elements = Element::init(&j);
+    let elements = Element::init(&json_data);
 
     unsafe {
         if ELEMENTS_COUNT == 0 {
@@ -48,10 +48,10 @@ async fn main() {
         }
     }
 
-    let mut file: Box<dyn Write> = Box::new(std::io::stdout());
+    let mut output: Box<dyn Write> = Box::new(std::io::stdout());
 
     if cli.save_to_file {
-        file = Box::new(
+        output = Box::new(
             std::fs::OpenOptions::new()
                 .create(true)
                 .write(true)
@@ -62,9 +62,9 @@ async fn main() {
     }
 
     for elem in elements {
-        match file.write_fmt(format_args!("{:?}", elem)) {
+        match output.write_fmt(format_args!("{:?}", elem)) {
             Ok(()) => {}
-            Err(e) => panic!("Failed to save file!\nError: {}", e),
+            Err(e) => panic!("Failed to write to output!\nError: {}", e),
         }
     }
 
