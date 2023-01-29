@@ -1,7 +1,7 @@
 extern crate json;
 extern crate reqwest;
 
-use std::str::FromStr;
+use std::{str::FromStr};
 
 use json::JsonValue;
 use JsonValue::Null;
@@ -10,6 +10,16 @@ use JsonValue::Null;
 pub struct Empty;
 
 pub static mut ELEMENTS_COUNT: u128 = 0;
+
+//var,field name, def value
+macro_rules! get_data_wrapper{
+    ($var:ident,$name:expr,$def_value:expr)=>{
+        match Element::get_data($var,stringify!($name)){
+            Ok(o)=>o,
+            _ => $def_value
+        }
+    }
+}
 
 //TODO: add better debug formatting
 #[derive(PartialEq)]
@@ -68,55 +78,40 @@ impl Element {
         unsafe {
             ELEMENTS_COUNT += 1;
         }
+        let mut total_data = String::new();
+
+        let mut add_to_total = |var : String|{
+            if !var.is_empty(){
+                if !total_data.is_empty(){
+                    total_data += "\n";
+                }
+                total_data += &var;
+            } 
+        };
+
+        let _title = get_data_wrapper!(data,title,String::new());
+        let selftext = get_data_wrapper!(data,selftext,String::new());
+        let body = get_data_wrapper!(data,body,String::new());
+        add_to_total(_title);
+        add_to_total(selftext);
+        add_to_total(body);
         Ok(Element {
-            author: match Element::get_data(data, "author") {
-                Ok(o) => o,
-                _ => String::new(),
-            },
-            //TODO: append all instead of choosing one
-            data: match Element::get_data(data, "body") {
-                Ok(o) => o,
-                _ => match Element::get_data(data, "title") {
-                    Ok(o) => o,
-                    _ => match Element::get_data(data, "selftext") {
-                        Ok(o) => o,
-                        _ => String::new(),
-                    },
-                },
-            },
+            author : get_data_wrapper!(data,author,String::new()),
+            data:total_data,
             children: match Element::get_replies(data) {
                 Ok(o) => o,
                 _ => Vec::new(),
             },
-            ups: match Element::get_data(data, "ups") {
-                Ok(o) => match o.parse::<usize>() {
-                    Ok(o) => o,
-                    _ => 0,
-                },
-                _ => 0,
+            ups: match get_data_wrapper!(data,ups,"0".to_string()).parse::<usize>(){
+                Ok(o)=>o,
+                _=>0usize
             },
-            post_hint: match Element::get_data(data, "post_hint") {
-                Ok(o) => o,
-                _ => String::new(),
-            },
-            url: match Element::get_data(data, "url_overridden_by_dest") {
-                Ok(o) => o,
-                _ => String::new(),
-            },
+            post_hint: get_data_wrapper!(data, "post_hint", String::new()),
+            url : get_data_wrapper!(data,url_overridden_by_dest,String::new()),
             //a hacky way, but "kind" attribute is higher in the json tree so it would be a pain in the butt to get it that way
-            kind: match Element::get_data(data, "name") {
-                Ok(o) => o[0..2].to_owned(),
-                _ => String::new(),
-            },
-            created_utc: match Element::get_data(data, "created_utc") {
-                Ok(o) => o,
-                _ => String::new(),
-            },
-            depth: match Element::get_data(data, "depth") {
-                //TODO: Represent depth as a number
-                Ok(o) => o,
-                _ => String::from("0"),
-            },
+            kind: get_data_wrapper!(data,name,String::new())[0..2].to_owned(),
+            created_utc: get_data_wrapper!(data, "created_utc",String::new()),
+            depth: get_data_wrapper!(data,depth,"0".to_string()),
         })
     }
 
