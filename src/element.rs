@@ -73,6 +73,7 @@ impl Element {
                 Ok(o) => o,
                 _ => String::new(),
             },
+            //TODO: append all instead of choosing one
             data: match Element::get_data(data, "body") {
                 Ok(o) => o,
                 _ => match Element::get_data(data, "title") {
