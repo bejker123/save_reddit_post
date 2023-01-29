@@ -40,7 +40,7 @@ impl std::fmt::Debug for Element {
         let mut children = String::new();
 
         for child in &self.children {
-            children += &format!("{:?}", child);
+            children += &format!("{child:?}");
         }
 
         if !self.data.is_empty() || !self.author.is_empty() {

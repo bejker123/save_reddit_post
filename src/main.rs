@@ -62,9 +62,9 @@ async fn main() {
     }
 
     for elem in elements {
-        match output.write_fmt(format_args!("{:?}", elem)) {
+        match output.write_fmt(format_args!("{elem:?}")) {
             Ok(()) => {}
-            Err(e) => panic!("Failed to write to output!\nError: {}", e),
+            Err(e) => panic!("Failed to write to output!\nError: {e}"),
         }
     }
 
