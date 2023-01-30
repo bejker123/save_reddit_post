@@ -38,11 +38,7 @@ pub struct Element {
 
 impl std::fmt::Debug for Element {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut children = String::new();
-
-        for child in &self.children {
-            children += &format!("{child:?}");
-        }
+        let children = self.children.iter().map(|x| format!("{x:?}")).collect::<String>();
 
         if !self.data.is_empty() || !self.author.is_empty() {
             let indent_char = " ";
