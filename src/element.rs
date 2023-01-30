@@ -34,7 +34,7 @@ pub struct Element {
     post_hint: String,
     url: String, //url_overridden_by_dest
     ups: usize,
-    children: Vec<Element>,
+    pub children: Vec<Element>,
     created_utc: String,
     depth: String,
     permalink: String,

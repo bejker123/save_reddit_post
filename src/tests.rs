@@ -13,11 +13,11 @@ fn test_cli() {
     CLI::new(vec![st("test-bin"), st("-h")]);
     assert_eq!(
         CLI::new(vec![st("test-bin"), st("https://test-url.com/")]).url,
-        "https://test-url.com.json"
+        ("https://test-url.com.json","https://test-url.com/")
     );
     assert_eq!(
         CLI::new(vec![st("test-bin"), st("https://test-url.com/")]).url,
-        "https://test-url.com.json"
+        ("https://test-url.com.json","https://test-url.com")
     );
     assert_eq!(
         CLI::new(vec![
@@ -28,6 +28,7 @@ fn test_cli() {
         ]),
         CLI {
             url: st("https://test-url.com.json"),
+            base_url: st("https://test-url.com/"),
             save_to_file: true,
             save_path: st("test-path.txt")
         }
@@ -42,6 +43,7 @@ fn test_cli() {
         ]),
         CLI {
             url: st("https://test-url.com.json"),
+            base_url: st("https://test-url.com/"),
             save_to_file: false,
             save_path: st("test-path.txt")
         }
@@ -50,6 +52,7 @@ fn test_cli() {
         CLI::new(vec![st("test-bin"), st("-o"), st("https://test-url.com/")]),
         CLI {
             url: st("https://test-url.com.json"),
+            base_url: st("https://test-url.com/"),
             save_to_file: false,
             save_path: st("output.tmp")
         }
