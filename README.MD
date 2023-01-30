@@ -32,6 +32,7 @@ It will go through many changes in the future!
 
 ## Roadmap
 
+- [ ] Change first arg to url?
 - [ ] Add getting all comments on a post 
 - [ ] Reformat commit names(unify)
 - [ ] Add formatting, ex. HTML
