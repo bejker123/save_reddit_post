@@ -16,8 +16,10 @@ impl CLI {
         println!(" -s/--save specify save path(output.tmp by default)");
         println!(" -o/--output don't save to file just output to stdout");
 
-        if invalid_usage && !cfg!(test){
+        if invalid_usage{
             println!("Invalid usage!");
+        }
+        if !cfg!(test){
             std::process::exit(invalid_usage as i32);
         }
     }
