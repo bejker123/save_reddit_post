@@ -12,5 +12,6 @@ debug-assertions = false
 
 [dependencies]
 reqwest="0.11.14"
-tokio = { version="1.24.2", features = ["full"]}
+tokio = { version="1.24.2", features = ["macros","net","rt-multi-thread"]} #Finished dev [unoptimized + debuginfo] target(s) in 44.17s
+#tokio = { version="1.24.2", features = ["full"]} #Finished dev [unoptimized + debuginfo] target(s) in 59.50s
 json = "0.12.4"
