@@ -33,6 +33,7 @@ pub struct Element {
     children: Vec<Element>,
     created_utc: String,
     depth: String,
+    permalink: String,
 }
 
 impl std::fmt::Debug for Element {
@@ -112,6 +113,7 @@ impl Element {
             kind: get_data_wrapper!(data,name,String::new())[0..2].to_owned(),
             created_utc: get_data_wrapper!(data, "created_utc",String::new()),
             depth: get_data_wrapper!(data,depth,"0".to_string()),
+            permalink: get_data_wrapper!(data,permalink,String::new())
         })
     }
 
@@ -126,6 +128,7 @@ impl Element {
             kind: String::new(),
             created_utc: String::new(),
             depth: String::new(),
+            permalink: String::new(),
         }
     }
 
