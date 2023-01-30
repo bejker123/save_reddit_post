@@ -67,12 +67,9 @@ async fn main() {
             Err(e) => panic!("Failed to write to output!\nError: {e}"),
         }
     }
-
-    unsafe{
-        println!("{MORE_ELEMENTS:?}\nMORE_ELEMENTS_COUNT: {MORE_ELEMENTS_COUNT}\nMORE_ELEMENTS.len(): {}\n{}",MORE_ELEMENTS.len(),MORE_ELEMENTS_COUNT == MORE_ELEMENTS.len());
-    }
-
+    
     unsafe {
+        println!("{MORE_ELEMENTS:?}\nMORE_ELEMENTS_COUNT: {MORE_ELEMENTS_COUNT}\nMORE_ELEMENTS.len(): {}\n{}",MORE_ELEMENTS.len(),MORE_ELEMENTS_COUNT == MORE_ELEMENTS.len());
         print!(
             "Successfully got {} element{} NUM_COMMENTS: {NUM_COMMENTS}",
             ELEMENTS_COUNT,
