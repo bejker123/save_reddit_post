@@ -68,9 +68,13 @@ async fn main() {
         }
     }
 
+    unsafe{
+        println!("{MORE_ELEMENTS:?}\nMORE_ELEMENTS_COUNT: {MORE_ELEMENTS_COUNT}\nMORE_ELEMENTS.len(): {}\n{}",MORE_ELEMENTS.len(),MORE_ELEMENTS_COUNT == MORE_ELEMENTS.len());
+    }
+
     unsafe {
         print!(
-            "Successfully got {} element{}",
+            "Successfully got {} element{} NUM_COMMENTS: {NUM_COMMENTS}",
             ELEMENTS_COUNT,
             if ELEMENTS_COUNT == 1 { "" } else { "s" }
         );
