@@ -30,6 +30,13 @@ cargo run -- #pass arguments after "--"
 Please note that this repo is in its early stages.
 It will go through many changes in the future!
 
+## Roadmap
+
+- [ ] Add getting all comments on a post 
+- [ ] Reformat commit names(unify)
+- [ ] Add formatting, ex. HTML
+
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
