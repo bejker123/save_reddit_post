@@ -63,14 +63,13 @@ async fn main() {
             if e.len() < 2{
                 continue;
             }
-
             fn app(mut x : &mut Vec<Element>,y : &mut Vec<Element>){
                 for element in &mut *y{
                     if x.is_empty(){
                         break;
                     }
                     if *element == x[0]{
-                        //x.remove(0);
+                        x.remove(0);
                         print!("Append ");
                         element.children.append(&mut x);
                         break;
