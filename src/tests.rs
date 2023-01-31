@@ -31,7 +31,7 @@ fn test_element(){
             Err(e) => panic!("Failed to write to output!\nError: {e}"),
         }
     }
-    assert_eq!(std::fs::read_to_string(test_file_path).unwrap(),include_str!("element_test_output1.txt").to_owned())
+    assert_eq!(std::fs::read_to_string(test_file_path).unwrap(),include_str!("element_test_output1.txt").to_owned().replace("\r", ""))
 }
 
 
