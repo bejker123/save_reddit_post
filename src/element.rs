@@ -4,7 +4,6 @@ extern crate reqwest;
 use std::str::FromStr;
 
 use json::JsonValue;
-use JsonValue::Null;
 
 #[derive(Debug)]
 pub struct Empty;
@@ -168,7 +167,7 @@ impl Element {
 
     fn get_replies(element: &JsonValue) -> Result<Vec<Element>, Empty> {
         let mut out = Vec::<Element>::new();
-        if element["replies"] != Null {
+        if element["replies"] != JsonValue::Null {
             for child in element["replies"]["data"]["children"].members() {
                 let element = match Element::create(child) {
                     Ok(o) => o,
