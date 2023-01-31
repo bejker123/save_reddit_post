@@ -11,13 +11,15 @@ fn st(x: &str) -> String {
 #[test]
 fn test_cli() {
     CLI::new(vec![st("test-bin"), st("-h")]);
+    let cli1 = CLI::new(vec![st("test-bin"), st("https://test-url.com/")]);
     assert_eq!(
-        CLI::new(vec![st("test-bin"), st("https://test-url.com/")]).url,
-        ("https://test-url.com.json","https://test-url.com/")
+        (cli1.url,cli1.base_url),
+        (st("https://test-url.com.json"),st("https://test-url.com/"))
     );
+    let cli2 =  CLI::new(vec![st("test-bin"), st("https://test-url.com/")]);
     assert_eq!(
-        CLI::new(vec![st("test-bin"), st("https://test-url.com/")]).url,
-        ("https://test-url.com.json","https://test-url.com")
+        (cli2.url,cli2.base_url),
+        (st("https://test-url.com.json"),st("https://test-url.com/"))
     );
     assert_eq!(
         CLI::new(vec![
@@ -63,30 +65,30 @@ fn test_cli() {
 fn parse_url() {
     assert_eq!(
         CLI::parse_url(st("https://test-url.com/")),
-        "https://test-url.com.json"
+        (st("https://test-url.com.json"),st("https://test-url.com/"))
     );
     assert_eq!(
         CLI::parse_url(st("https://test-url.com/asd/?foo&bar:443")),
-        "https://test-url.com/asd.json"
+        (st("https://test-url.com/asd.json"),st("https://test-url.com/asd/"))
     );
     assert_eq!(
         CLI::parse_url(st("https://test-url.com/asd:443")),
-        "https://test-url.com/asd.json"
+        (st("https://test-url.com/asd.json"),st("https://test-url.com/asd/"))
     );
     assert_eq!(
         CLI::parse_url(st("https://test-url.com:443")),
-        "https://test-url.com.json"
+        (st("https://test-url.com.json"),st("https://test-url.com/"))
     );
     assert_eq!(
         CLI::parse_url(st("https://test-url.com\n\n\n ")),
-        "https://test-url.com.json"
+        (st("https://test-url.com.json"),st("https://test-url.com/"))
     );
     assert_eq!(
         CLI::parse_url(st("\nhttps://test-url.com\n\n\n ")),
-        "https://test-url.com.json"
+        (st("https://test-url.com.json"),st("https://test-url.com/"))
     );
     assert_eq!(
         CLI::parse_url(st("\nhttps://test-url.com\n\n\n /foo")),
-        "https://test-url.com/foo.json"
+        (st("https://test-url.com/foo.json"),st("https://test-url.com/foo/"))
     );
 }

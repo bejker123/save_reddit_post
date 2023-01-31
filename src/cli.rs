@@ -65,7 +65,11 @@ impl CLI {
                     }
                 }
             }
-            let (url,base_url) = Self::parse_url(args[args.len() - 1].to_owned());
+            match args.last(){
+                Some(o)=> url = o.to_string(),
+                _=>panic!("Failed to get last of args!")
+            } 
+            //let (url,_) = Self::parse_url(args[args.len() - 1].to_owned());
         }
 
         let (url,base_url) = CLI::parse_url(url);
@@ -78,6 +82,7 @@ impl CLI {
     }
 
     pub fn parse_url(mut url: String) -> (String,String) {
+        print!("{url}");
         url = url.replace('\'', "");
         url = url.replace(' ', "");
         url = url.replace('\n', "");
@@ -95,6 +100,7 @@ impl CLI {
             Some(o) => o + search_for.len(),
             _ => 0,
         };
+        print!(" {url}");
 
         url = match url[start_idx..].rfind(':') {
             Some(q_idx) => url[0..q_idx + start_idx].to_string(),
@@ -112,6 +118,7 @@ impl CLI {
         if !url.ends_with(".json") {
             url += ".json";
         }
+        println!(" {url}");
 
         (url,base_url)
     }
