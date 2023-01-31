@@ -2,11 +2,38 @@
 
 #[path = "cli.rs"]
 mod cli;
+
 use crate::cli::*;
 
 fn st(x: &str) -> String {
     x.to_string()
 }
+
+//TODO: add more
+#[test]
+fn test_element(){
+
+    let data = include_str!("element_test_data1.json");
+    let test_file_path = "test-output.tmp";
+
+    let json_data = json::parse(&data).unwrap();
+
+    let elements = crate::element::Element::init(&json_data);
+    let mut output = std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(test_file_path)
+            .unwrap();
+    for elem in elements {
+        match std::io::Write::write_fmt(&mut output, format_args!("{elem:?}")) {
+            Ok(()) => {}
+            Err(e) => panic!("Failed to write to output!\nError: {e}"),
+        }
+    }
+    assert_eq!(std::fs::read_to_string(test_file_path).unwrap(),include_str!("element_test_output1.txt").to_owned())
+}
+
 
 #[test]
 fn test_cli() {
