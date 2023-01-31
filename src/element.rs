@@ -1,11 +1,10 @@
 extern crate json;
 extern crate reqwest;
 
-use std::{str::FromStr};
+use std::str::FromStr;
 
 use json::JsonValue;
 use JsonValue::Null;
-use reqwest::get;
 
 #[derive(Debug)]
 pub struct Empty;
@@ -146,30 +145,13 @@ impl Element {
         })
     }
 
-    pub fn empty() -> Element {
-        Element {
-            author: String::new(),
-            data: String::new(),
-            children: Vec::<Element>::new(),
-            ups: 0,
-            post_hint: String::new(),
-            url: String::new(),
-            kind: String::new(),
-            created_utc: String::new(),
-            depth: String::new(),
-            permalink: String::new(),
-        }
-    }
-
     pub fn init(data: &JsonValue) -> Vec<Element> {
         let mut elements = Vec::<Element>::new();
 
         for member in data.members() {
             for child in member["data"]["children"].members() {
-                match Element::create(&child) {
-                    Ok(o) => elements.push(o),
-                    _ => {}
-                }
+                //.If created element isn't empty (Ok) push it.
+                if let Ok(o) = Element::create(child) {elements.push(o)}
             }
         }
         elements
