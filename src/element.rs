@@ -25,7 +25,6 @@ macro_rules! get_data_wrapper{
 }
 
 //TODO: add better debug formatting
-#[derive(PartialEq)]
 pub struct Element {
     author: String,
     data: String,
@@ -37,6 +36,13 @@ pub struct Element {
     created_utc: String,
     depth: String,
     permalink: String,
+    id: String,
+}
+
+impl PartialEq for Element{
+    fn eq(&self, other : &Element) -> bool {
+        self.id == other.id
+    }
 }
 
 impl std::fmt::Debug for Element {
@@ -119,8 +125,10 @@ impl Element {
         }
 
         let _title = get_data_wrapper!(data,title,String::new());
+        let url = get_data_wrapper!(data,url,String::new());
         let selftext = get_data_wrapper!(data,selftext,String::new());
         let body = get_data_wrapper!(data,body,String::new());
+        add_to_total(url);
         add_to_total(_title);
         add_to_total(selftext);
         add_to_total(body);
@@ -141,7 +149,8 @@ impl Element {
             kind: get_data_wrapper!(data,name,String::new())[0..2].to_owned(),
             created_utc: get_data_wrapper!(data, "created_utc",String::new()),
             depth: get_data_wrapper!(data,depth,"0".to_string()),
-            permalink: get_data_wrapper!(data,permalink,String::new())
+            permalink: get_data_wrapper!(data,permalink,String::new()),
+            id: get_data_wrapper!(data,id,String::new()),
         })
     }
 
