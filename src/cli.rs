@@ -82,7 +82,6 @@ impl CLI {
     }
 
     pub fn parse_url(mut url: String) -> (String,String) {
-        print!("{url}");
         url = url.replace('\'', "");
         url = url.replace(' ', "");
         url = url.replace('\n', "");
@@ -100,7 +99,6 @@ impl CLI {
             Some(o) => o + search_for.len(),
             _ => 0,
         };
-        print!(" {url}");
 
         url = match url[start_idx..].rfind(':') {
             Some(q_idx) => url[0..q_idx + start_idx].to_string(),
@@ -118,7 +116,6 @@ impl CLI {
         if !url.ends_with(".json") {
             url += ".json";
         }
-        println!(" {url}");
 
         (url,base_url)
     }
