@@ -133,13 +133,13 @@ async fn main() {
             //ELEMENTS_COUNT -= 1; //TODO: remove this?
 
             //calculate % of progress as a 64bit float 64
-            let precent = idx/((NUM_COMMENTS - base_elements) as f64)*100f64;
+            let precent = idx/(MORE_ELEMENTS.len() as f64)*100f64;
 
             //get time passed since start of getting 'more' elements 
             let passed = std::time::SystemTime::now().duration_since(more_start).unwrap().as_millis();
 
             //Get estimated time
-            let eta = (NUM_COMMENTS - base_elements) as f64 / (idx/ passed as f64);
+            let eta =  MORE_ELEMENTS.len() as f64 / (idx/ passed as f64);
 
             //Format the line to be printed
             let mut line = format!("{idx} / {} {:.2}% runtime: {} ETA: {}",
