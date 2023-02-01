@@ -99,9 +99,6 @@ impl Element {
             return Err(Empty {});
         }
 
-        unsafe {
-            ELEMENTS_COUNT += 1;
-        }
         let mut total_data = String::new();
 
         let mut add_to_total = |var : String|{
@@ -131,8 +128,17 @@ impl Element {
         add_to_total(_title);
         add_to_total(selftext);
         add_to_total(body);
+
+        let author = get_data_wrapper!(data,author,String::new());
+
+        if !(total_data.trim() == "[deleted]" || total_data.trim() == "[removed]"
+            || author.trim() == "[deleted]"|| author.trim() == "[removed]") {
+                unsafe {
+                    ELEMENTS_COUNT += 1;
+                }
+        }
         Ok(Element {
-            author : get_data_wrapper!(data,author,String::new()),
+            author : author,
             data:total_data,
             children: match Element::get_replies(data) {
                 Ok(o) => o,

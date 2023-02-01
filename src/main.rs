@@ -107,14 +107,15 @@ async fn main() {
 
     let mut last_line_length = 0usize;
 
-    
+    //Yes I know representing index as a float is dumb.
+    let mut idx = 1f64;
 
     //'more' elements
     unsafe {
         if MORE_ELEMENTS_COUNT > 0{
             println!("Getting 'more' elements:");
         }
-        let base_elements = ELEMENTS_COUNT;
+        let base_elements = ELEMENTS_COUNT - 1;
 
         //Get more elements from the 'more' listing
         for more_element in &MORE_ELEMENTS {
@@ -132,12 +133,9 @@ async fn main() {
             //Parse json data to elements
             let mut e = Element::init(&json_data);
             //ELEMENTS_COUNT -= 1; //TODO: remove this?
-            
-            //Don't count elements from base file.
-            let more_elem_c = ELEMENTS_COUNT - base_elements;
 
             //calculate % of progress as a 64bit float 64
-            let precent = (more_elem_c as f64)/((NUM_COMMENTS - base_elements) as f64)*100f64;
+            let precent = idx/((NUM_COMMENTS - base_elements) as f64)*100f64;
 
             //get time passed since start of getting 'more' elements 
             let passed = std::time::SystemTime::now().duration_since(more_start).unwrap().as_millis();
@@ -147,10 +145,10 @@ async fn main() {
             last_passed = passed;
 
             //Get estimated time
-            let eta = (NUM_COMMENTS - base_elements) as f64 / (more_elem_c as f64 / passed as f64);
+            let eta = (NUM_COMMENTS - base_elements) as f64 / (idx/ passed as f64);
 
             //Format the line to be printed
-            let mut line = format!("{more_elem_c} / {} {:.2}% passed: {} delta: {}ms ETA: {}",
+            let mut line = format!("{idx} / {} {:.2}% passed: {} delta: {}ms ETA: {}",
             MORE_ELEMENTS.len(),precent,
             convert_time(passed as f64/1000f64),
             delta,
@@ -169,7 +167,8 @@ async fn main() {
             //Because print! doesn't flush as oppose to println!
             print!("\r{line}");
             std::io::stdout().flush();
-
+            idx += 1.0;
+            
             //
             if e.len() < 2{
                 elements.append(&mut e[0].children);
@@ -247,7 +246,7 @@ async fn main() {
 
     //Print last bit of debug data
     unsafe {
-        println!("MORE_ELEMENTS_COUNT: {MORE_ELEMENTS_COUNT}\nMORE_ELEMENTS.len(): {}\n{}",MORE_ELEMENTS.len(),MORE_ELEMENTS_COUNT == MORE_ELEMENTS.len());
+       // println!("MORE_ELEMENTS_COUNT: {MORE_ELEMENTS_COUNT}\nMORE_ELEMENTS.len(): {}\n{}",MORE_ELEMENTS.len(),MORE_ELEMENTS_COUNT == MORE_ELEMENTS.len());
         print!(
             "Successfully got {} element{} NUM_COMMENTS: {NUM_COMMENTS}",
             ELEMENTS_COUNT,
