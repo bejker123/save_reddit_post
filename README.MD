@@ -33,7 +33,7 @@ It will go through many changes in the future!
 ## Roadmap
 
 - [ ] Change first arg to url?
-- [ ] Add getting all comments on a post 
+- [x] Add getting all comments on a post 
 - [ ] Add formatting, ex. HTML
 
 

@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 //Allow this, bcs when running tests compiler throws a dead code warning which is not true.
 #[derive(PartialEq, Eq, Debug)]
+#[allow(clippy::upper_case_acronyms)] //my preference
 pub struct CLI {
     pub url: String,
     pub base_url: String,

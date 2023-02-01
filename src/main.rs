@@ -113,7 +113,6 @@ async fn main() {
         if MORE_ELEMENTS_COUNT > 0{
             println!("Getting 'more' elements:");
         }
-        let base_elements = ELEMENTS_COUNT - 1;
 
         //Get more elements from the 'more' listing
         for more_element in &MORE_ELEMENTS {
@@ -159,7 +158,7 @@ async fn main() {
             //If you don;t flush stdout not every line will be printed,
             //Because print! doesn't flush as oppose to println!
             print!("\r{line}");
-            std::io::stdout().flush();
+            std::io::stdout().flush().unwrap();
             idx += 1.0;
             
             //

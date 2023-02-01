@@ -24,6 +24,7 @@ macro_rules! get_data_wrapper{
 }
 
 //TODO: add better debug formatting
+#[allow(dead_code)]
 pub struct Element {
     author: String,
     data: String,
@@ -137,7 +138,10 @@ impl Element {
                     ELEMENTS_COUNT += 1;
                 }
         }
-        Ok(Element {
+        Ok(
+            //Use this for clarity
+            #[allow(clippy::redundant_field_names)]
+            Element {
             author : author,
             data:total_data,
             children: match Element::get_replies(data) {
