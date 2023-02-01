@@ -212,7 +212,7 @@ async fn main() {
         }
     }
 
-    println!("");
+    println!();
     //Set the default output to stdout
     let mut output: Box<dyn Write> = Box::new(std::io::stdout());
 
