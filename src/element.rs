@@ -1,15 +1,17 @@
 extern crate json;
 extern crate reqwest;
 
-use std::{str::FromStr};
+use std::str::FromStr;
 
 use json::JsonValue;
-use JsonValue::Null;
 
 #[derive(Debug)]
 pub struct Empty;
 
-pub static mut ELEMENTS_COUNT: u128 = 0;
+pub static mut NUM_COMMENTS: usize = 0;
+pub static mut ELEMENTS_COUNT: usize = 0;
+pub static mut MORE_ELEMENTS_COUNT : usize = 0; 
+pub static mut MORE_ELEMENTS : Vec<String> = Vec::new(); 
 
 //var,field name, def value
 macro_rules! get_data_wrapper{
@@ -22,7 +24,6 @@ macro_rules! get_data_wrapper{
 }
 
 //TODO: add better debug formatting
-#[derive(PartialEq)]
 pub struct Element {
     author: String,
     data: String,
@@ -30,10 +31,17 @@ pub struct Element {
     post_hint: String,
     url: String, //url_overridden_by_dest
     ups: usize,
-    children: Vec<Element>,
+    pub children: Vec<Element>,
     created_utc: String,
     depth: String,
     permalink: String,
+    id: String,
+}
+
+impl PartialEq for Element{
+    fn eq(&self, other : &Element) -> bool {
+        self.id == other.id
+    }
 }
 
 impl std::fmt::Debug for Element {
@@ -68,13 +76,29 @@ impl std::fmt::Debug for Element {
 }
 
 impl Element {
-    pub fn create(data: &JsonValue) -> Result<Element, Empty> {
+    pub fn create(child: &JsonValue) -> Result<Element, Empty> {
+        let data = &child["data"];
         if *data == JsonValue::Null {
             return Err(Empty {});
         }
-        unsafe {
-            ELEMENTS_COUNT += 1;
+        //If the element lists more elements(it's kind is more)
+        if child["kind"].clone() == "more"{
+            unsafe{
+                    MORE_ELEMENTS_COUNT += match data["count"].as_usize(){
+                    Some(o)=>o,
+                    _=>0
+                }
+            }
+            for more_element in data["children"].members(){
+                unsafe{
+                    MORE_ELEMENTS.push(more_element.to_string());
+                }
+            }
+
+            //Not really an error but it's the best way
+            return Err(Empty {});
         }
+
         let mut total_data = String::new();
 
         let mut add_to_total = |var : String|{
@@ -86,14 +110,35 @@ impl Element {
             } 
         };
 
+        let n_comments = get_data_wrapper!(data,num_comments,String::new());
+        if !n_comments.is_empty(){
+            unsafe{
+                    NUM_COMMENTS = match n_comments.parse::<usize>(){
+                    Ok(o)=>o,
+                    _=>0
+                }
+            }
+        }
+
         let _title = get_data_wrapper!(data,title,String::new());
+        let url = get_data_wrapper!(data,url,String::new());
         let selftext = get_data_wrapper!(data,selftext,String::new());
         let body = get_data_wrapper!(data,body,String::new());
+        add_to_total(url);
         add_to_total(_title);
         add_to_total(selftext);
         add_to_total(body);
+
+        let author = get_data_wrapper!(data,author,String::new());
+
+        if !(total_data.trim() == "[deleted]" || total_data.trim() == "[removed]"
+            || author.trim() == "[deleted]"|| author.trim() == "[removed]") {
+                unsafe {
+                    ELEMENTS_COUNT += 1;
+                }
+        }
         Ok(Element {
-            author : get_data_wrapper!(data,author,String::new()),
+            author : author,
             data:total_data,
             children: match Element::get_replies(data) {
                 Ok(o) => o,
@@ -109,36 +154,18 @@ impl Element {
             kind: get_data_wrapper!(data,name,String::new())[0..2].to_owned(),
             created_utc: get_data_wrapper!(data, "created_utc",String::new()),
             depth: get_data_wrapper!(data,depth,"0".to_string()),
-            permalink: get_data_wrapper!(data,permalink,String::new())
+            permalink: get_data_wrapper!(data,permalink,String::new()),
+            id: get_data_wrapper!(data,id,String::new()),
         })
-    }
-
-    pub fn empty() -> Element {
-        Element {
-            author: String::new(),
-            data: String::new(),
-            children: Vec::<Element>::new(),
-            ups: 0,
-            post_hint: String::new(),
-            url: String::new(),
-            kind: String::new(),
-            created_utc: String::new(),
-            depth: String::new(),
-            permalink: String::new(),
-        }
     }
 
     pub fn init(data: &JsonValue) -> Vec<Element> {
         let mut elements = Vec::<Element>::new();
 
-        for x in data.members() {
-            for y in x["data"]["children"].members() {
-                let data = y["data"].clone();
-
-                match Element::create(&data) {
-                    Ok(o) => elements.push(o),
-                    _ => elements.push(Element::empty()),
-                }
+        for member in data.members() {
+            for child in member["data"]["children"].members() {
+                //.If created element isn't empty (Ok) push it.
+                if let Ok(o) = Element::create(child) {elements.push(o)}
             }
         }
         elements
@@ -146,9 +173,9 @@ impl Element {
 
     fn get_replies(element: &JsonValue) -> Result<Vec<Element>, Empty> {
         let mut out = Vec::<Element>::new();
-        if element["replies"] != Null {
-            for r in element["replies"]["data"]["children"].members() {
-                let element = match Element::create(&r["data"]) {
+        if element["replies"] != JsonValue::Null {
+            for child in element["replies"]["data"]["children"].members() {
+                let element = match Element::create(child) {
                     Ok(o) => o,
                     _ => continue,
                 };

@@ -3,6 +3,7 @@
 #[derive(PartialEq, Eq, Debug)]
 pub struct CLI {
     pub url: String,
+    pub base_url: String,
     pub save_to_file: bool,
     pub save_path: String,
 }
@@ -64,18 +65,23 @@ impl CLI {
                     }
                 }
             }
-            url = Self::parse_url(args[args.len() - 1].to_owned());
+            match args.last(){
+                Some(o)=> url = o.to_string(),
+                _=>panic!("Failed to get last of args!")
+            } 
+            //let (url,_) = Self::parse_url(args[args.len() - 1].to_owned());
         }
 
-        let url = CLI::parse_url(url);
+        let (url,base_url) = CLI::parse_url(url);
         CLI {
             url,
+            base_url,
             save_to_file,
             save_path,
         }
     }
 
-    pub fn parse_url(mut url: String) -> String {
+    pub fn parse_url(mut url: String) -> (String,String) {
         url = url.replace('\'', "");
         url = url.replace(' ', "");
         url = url.replace('\n', "");
@@ -99,14 +105,18 @@ impl CLI {
             _ => url,
         };
 
+        let mut base_url = url.clone();
+
         if url.ends_with('/') {
             url = url[0..url.len() - 1].to_string();
+        }else{
+            base_url += "/";
         }
 
         if !url.ends_with(".json") {
             url += ".json";
         }
 
-        url
+        (url,base_url)
     }
 }
