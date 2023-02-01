@@ -103,8 +103,6 @@ async fn main() {
 
     let more_start = std::time::SystemTime::now();
 
-    let mut last_passed = 0u128;
-
     let mut last_line_length = 0usize;
 
     //Yes I know representing index as a float is dumb.
@@ -140,18 +138,13 @@ async fn main() {
             //get time passed since start of getting 'more' elements 
             let passed = std::time::SystemTime::now().duration_since(more_start).unwrap().as_millis();
 
-            //calculate delta between the last request
-            let delta = passed - last_passed;
-            last_passed = passed;
-
             //Get estimated time
             let eta = (NUM_COMMENTS - base_elements) as f64 / (idx/ passed as f64);
 
             //Format the line to be printed
-            let mut line = format!("{idx} / {} {:.2}% passed: {} delta: {}ms ETA: {}",
+            let mut line = format!("{idx} / {} {:.2}% runtime: {} ETA: {}",
             MORE_ELEMENTS.len(),precent,
             convert_time(passed as f64/1000f64),
-            delta,
             convert_time((eta - passed as f64)/1000f64));
             
             let line_length = line.len();
