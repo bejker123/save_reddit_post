@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+
+
 //Allow this, bcs when running tests compiler throws a dead code warning which is not true.
 #[derive(PartialEq, Eq, Debug)]
 #[allow(clippy::upper_case_acronyms)] //my preference
@@ -34,7 +36,7 @@ impl CLI {
     pub fn new(args: Vec<String>) -> CLI {
         let mut url = String::new();
         let mut save_to_file = true;
-        let mut save_path = String::from("output.tmp");
+        let mut save_path = String::from("output.txt");
 
         if args.len() == 1 {
             Self::help(true);
@@ -75,9 +77,11 @@ impl CLI {
                         match format.as_str(){
                             "default" | "d"=>{
                                 unsafe{crate::element::FORMAT = crate::element::ElementFormat::Default}
+                                save_path = String::from("output.txt")
                             },
                             "html" | "h"=>{
                                 unsafe{crate::element::FORMAT = crate::element::ElementFormat::HTML}
+                                save_path = String::from("output.html")
                             }
                             _=>{
                                 println!("Invalid format: {}", args[i+1]);

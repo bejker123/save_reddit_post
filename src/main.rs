@@ -230,7 +230,10 @@ async fn main() {
             }
         },
         ElementFormat::HTML=>{
-            
+            match writeln!(output,"{}",include_str!("html_file.html").replace("{title}", &cli.base_url)){
+                Ok(())=>{},
+                Err(e)=>panic!("fail.\nError: {e}")
+            }
         }
     }
         
@@ -248,12 +251,23 @@ async fn main() {
     }
         
     //Write the end:
-        
+    match get_safe!(FORMAT){
+        ElementFormat::Default=>{
+
+        },
+        ElementFormat::HTML=>{
+            match writeln!(output,"\t</div>\n</body>\n</html>"){
+                Ok(())=>{},
+                Err(e)=>panic!("fail.\nError: {e}")
+            }
+        }
+    }
         
     println!("success");
         
     //Print last bit of debug data
     // println!("MORE_ELEMENTS_COUNT: {MORE_ELEMENTS_COUNT}\nMORE_ELEMENTS.len(): {}\n{}",MORE_ELEMENTS.len(),MORE_ELEMENTS_COUNT == MORE_ELEMENTS.len());
+    //TODO: fix descrepency!!!
     print!(
         "Successfully got {} element{} NUM_COMMENTS: {}",
         get_safe!(ELEMENTS_COUNT),

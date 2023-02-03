@@ -89,7 +89,13 @@ impl std::fmt::Debug for Element {
                 }
             },
             ElementFormat::HTML=>{
-                
+                let indent_char = " ";
+                let indent = "\t".to_owned()+&indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
+                return f.write_fmt(format_args!(
+                    "\n{indent}<div class=\"element\">\n\t{indent}{}<ul>{children}</ul>\n{indent}</div>", //TODO: add human readable formatting
+                    self.id,
+                    
+                ))
             }
     
     }
