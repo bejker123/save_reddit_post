@@ -15,7 +15,7 @@ pub enum ElementFormat{
 }
 
 pub static mut NUM_COMMENTS: usize = 0;
-pub static mut ELEMENTS_COUNT: usize = 0;
+pub static mut ELEMENTS_COUNT: usize = 1;
 pub static mut MORE_ELEMENTS_COUNT : usize = 0; 
 pub static mut MORE_ELEMENTS : Vec<String> = Vec::new();
 pub static mut FORMAT : ElementFormat = ElementFormat::Default;
@@ -92,8 +92,16 @@ impl std::fmt::Debug for Element {
                 let indent_char = " ";
                 let indent = "\t".to_owned()+&indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
                 return f.write_fmt(format_args!(
-                    "\n{indent}<div class=\"element\">\n\t{indent}{}<ul>{children}</ul>\n{indent}</div>", //TODO: add human readable formatting
-                    self.id,
+                    "\n{indent}<div class=\"element\">\n\t
+                    {indent}<h4><a href=\"{}\">{}</a> ⬆️{}:</h4>
+                    <span>{}</span>
+                    <ul>{children}</ul>
+                    \n{indent}
+                    </div>", //TODO: add human readable formatting
+                    String::from("https://reddit.com")+&self.permalink,
+                    self.author,
+                    self.ups,
+                    self.data,
                     
                 ))
             }
@@ -161,8 +169,8 @@ impl Element {
 
         let author = get_data_wrapper!(data,author,String::new());
 
-        if !(total_data.trim() == "[deleted]" || total_data.trim() == "[removed]"
-            || author.trim() == "[deleted]"|| author.trim() == "[removed]") {
+        if !(total_data.trim() == "[deleted]" && total_data.trim() == "[removed]"
+            && author.trim() == "[deleted]"&& author.trim() == "[removed]") {
                 unsafe {
                     ELEMENTS_COUNT += 1;
                 }

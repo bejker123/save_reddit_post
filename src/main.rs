@@ -198,7 +198,7 @@ async fn main() {
             }
             println!();
         }
-    if get_safe!(ELEMENTS_COUNT) == 0 {
+    if get_safe!(ELEMENTS_COUNT) == 1 {
         panic!("Error, returned 0 elements!");
     }
         
