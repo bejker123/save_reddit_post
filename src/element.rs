@@ -8,6 +8,7 @@ use json::JsonValue;
 #[derive(Debug)]
 pub struct Empty;
 
+#[derive(Clone, Copy)]
 pub enum ElementFormat{
     Default,HTML,
 }
@@ -18,7 +19,7 @@ pub static mut MORE_ELEMENTS_COUNT : usize = 0;
 pub static mut MORE_ELEMENTS : Vec<String> = Vec::new();
 pub static mut FORMAT : ElementFormat = ElementFormat::Default;
 
-fn get_format()->ElementFormat{
+pub fn get_format()->ElementFormat{
     unsafe{FORMAT}
 }
 

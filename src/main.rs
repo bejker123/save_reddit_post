@@ -223,6 +223,17 @@ async fn main() {
         print!("Writing to stdout");
     }
 
+    //Write begining of the file:
+    match get_format(){
+        ElementFormat::Default=>{
+
+        },
+        ElementFormat::HTML=>{
+
+        }
+    }
+
+
     //Write every element to the output.
     //For formatting see element.rs:
     //                   impl std::fmt::Debug for Element
@@ -234,6 +245,10 @@ async fn main() {
             Err(e) => panic!("fail.\nError: {e}"), 
         }
     }
+
+    //Write the end:
+
+
     println!("success");
 
     //Print last bit of debug data
