@@ -17,6 +17,11 @@ impl CLI {
         println!(" -h/--help display this help");
         println!(" -s/--save specify save path(output.tmp by default)");
         println!(" -o/--output don't save to file just output to stdout");
+        println!(" -f/--format set the format (not case sensitive)");
+        println!(" Valid formats:");
+        println!("{}Default/d"," ".repeat(15));
+        println!("{}HTML/h"," ".repeat(15));
+        
 
         if invalid_usage{
             println!("Invalid usage!");
@@ -60,6 +65,25 @@ impl CLI {
                     }
                     "-o" | "--output" => {
                         save_to_file = false;
+                    }
+                    "-f" | "--format" => {
+                        if args.len() < i + 1 {
+                            Self::help(true);
+                        }
+                        skip_count += 1;
+                        let format = args[i + 1].clone().to_lowercase();
+                        match format.as_str(){
+                            "default" | "d"=>{
+                                unsafe{crate::element::FORMAT = crate::element::ElementFormat::Default}
+                            },
+                            "html" | "h"=>{
+                                unsafe{crate::element::FORMAT = crate::element::ElementFormat::HTML}
+                            }
+                            _=>{
+                                println!("Invalid format: {}", args[i+1]);
+                                Self::help(true);
+                            }
+                        }
                     }
                     _ => {
                         println!("Invalid argument: {}", args[i])
