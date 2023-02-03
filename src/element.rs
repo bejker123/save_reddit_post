@@ -8,10 +8,15 @@ use json::JsonValue;
 #[derive(Debug)]
 pub struct Empty;
 
+pub enum ElementFormat{
+    Default,HTML,
+}
+
 pub static mut NUM_COMMENTS: usize = 0;
 pub static mut ELEMENTS_COUNT: usize = 0;
 pub static mut MORE_ELEMENTS_COUNT : usize = 0; 
-pub static mut MORE_ELEMENTS : Vec<String> = Vec::new(); 
+pub static mut MORE_ELEMENTS : Vec<String> = Vec::new();
+pub static mut FORMAT : ElementFormat = ElementFormat::Default;
 
 //var,field name, def value
 macro_rules! get_data_wrapper{
@@ -49,29 +54,40 @@ impl std::fmt::Debug for Element {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let children = self.children.iter().map(|x| format!("{x:?}")).collect::<String>();
 
-        if !self.data.is_empty() || !self.author.is_empty() {
-            let indent_char = " ";
-            //let secondary_indent_char = " ";
-            let indent = indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
-            let ups_indent = indent_char.repeat(self.ups.to_string().len());
-            //TODO: make this more readable
-            return f.write_fmt(format_args!(
-                "{}{} {} {}: {}\n{}",
-                indent,
-                self.depth,
-                self.ups,
-                self.author,
-                self.data.replace(
-                    '\n',
-                    &(String::from('\n')
-                        + &(indent.to_string()
-                            + &indent_char.repeat(self.author.len() + 4)
-                            + &ups_indent
-                            + " ")) //.replace(indent_char, secondary_indent_char))
-                ),
-                children
-            ));
+        unsafe{
+        match FORMAT{
+            ElementFormat::Default=>{
+                if !self.data.is_empty() || !self.author.is_empty() {
+                    let indent_char = " ";
+                    //let secondary_indent_char = " ";
+                    let indent = indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
+                    let ups_indent = indent_char.repeat(self.ups.to_string().len());
+                    //TODO: make this more readable
+                    return f.write_fmt(format_args!(
+                        "{}{} {} {}: {}\n{}",
+                        indent,
+                        self.depth,
+                        self.ups,
+                        self.author,
+                        self.data.replace(
+                            '\n',
+                            &(String::from('\n')
+                                + &(indent.to_string()
+                                    + &indent_char.repeat(self.author.len() + 4)
+                                    + &ups_indent
+                                    + " ")) //.replace(indent_char, secondary_indent_char))
+                        ),
+                        children
+                    ));
+                }
+            },
+            ElementFormat::HTML=>{
+                
+            }
         }
+    }
+
+
         Ok(())
     }
 }
