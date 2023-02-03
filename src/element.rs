@@ -8,6 +8,7 @@ use json::JsonValue;
 #[derive(Debug)]
 pub struct Empty;
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Copy)]
 pub enum ElementFormat{
     Default,HTML,
@@ -19,8 +20,10 @@ pub static mut MORE_ELEMENTS_COUNT : usize = 0;
 pub static mut MORE_ELEMENTS : Vec<String> = Vec::new();
 pub static mut FORMAT : ElementFormat = ElementFormat::Default;
 
-pub fn get_format()->ElementFormat{
-    unsafe{FORMAT}
+macro_rules! get_safe {
+    ($var:ident) => {
+        unsafe{$var.clone()}
+    };
 }
 
 //var,field name, def value
@@ -59,7 +62,7 @@ impl std::fmt::Debug for Element {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let children = self.children.iter().map(|x| format!("{x:?}")).collect::<String>();
 
-        match get_format(){
+        match get_safe!(FORMAT){
             ElementFormat::Default=>{
                 if !self.data.is_empty() || !self.author.is_empty() {
                     let indent_char = " ";
