@@ -270,7 +270,7 @@ async fn main() {
     //TODO: fix descrepency!!!
     print!(
         "Successfully got {} element{} NUM_COMMENTS: {}",
-        get_safe!(ELEMENTS_COUNT),
+        if !get_safe!(MORE_ELEMENTS).is_empty() {get_safe!(ELEMENTS_COUNT)} else {get_safe!(ELEMENTS_COUNT)+2},
         if get_safe!(ELEMENTS_COUNT) == 1 { "" } else { "s" },
         get_safe!(NUM_COMMENTS)
     );
