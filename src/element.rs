@@ -18,6 +18,10 @@ pub static mut MORE_ELEMENTS_COUNT : usize = 0;
 pub static mut MORE_ELEMENTS : Vec<String> = Vec::new();
 pub static mut FORMAT : ElementFormat = ElementFormat::Default;
 
+fn get_format()->ElementFormat{
+    unsafe{FORMAT}
+}
+
 //var,field name, def value
 macro_rules! get_data_wrapper{
     ($var:ident,$name:expr,$def_value:expr)=>{
@@ -54,8 +58,7 @@ impl std::fmt::Debug for Element {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let children = self.children.iter().map(|x| format!("{x:?}")).collect::<String>();
 
-        unsafe{
-        match FORMAT{
+        match get_format(){
             ElementFormat::Default=>{
                 if !self.data.is_empty() || !self.author.is_empty() {
                     let indent_char = " ";
@@ -84,7 +87,7 @@ impl std::fmt::Debug for Element {
             ElementFormat::HTML=>{
                 
             }
-        }
+    
     }
 
 
