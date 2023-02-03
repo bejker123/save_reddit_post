@@ -35,6 +35,8 @@ It will go through many changes in the future!
 - [ ] Change first arg to url?
 - [x] Add getting all comments on a post 
 - [ ] Add formatting, ex. HTML
+- [ ] Add safe wrappers for static mut members 
+- [ ] Add more command line options like filtering and max comments count
 
 
 ## Contributing
