@@ -224,7 +224,7 @@ async fn main() {
     //Write begining of the file:
     match get_safe!(FORMAT){
         ElementFormat::Default=>{
-            match writeln!(output,"Source: {}",cli.base_url){
+            match writeln!(output,"# {{indent}} {{ups}} {{author}}: {{contnet}}\n\nSource: {}",cli.base_url){
                 Ok(())=>{},
                 Err(e)=>panic!("fail.\nError: {e}")
             }
