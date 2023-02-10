@@ -83,7 +83,7 @@ fn test_cli() {
             url: st("https://test-url.com.json"),
             base_url: st("https://test-url.com/"),
             save_to_file: false,
-            save_path: st("output.tmp")
+            save_path: st("output.txt")
         }
     );
 }
