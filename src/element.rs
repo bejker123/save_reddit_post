@@ -11,7 +11,7 @@ pub struct Empty;
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Copy)]
 pub enum ElementFormat{
-    Default,HTML,
+    Default,HTML,JSON
 }
 
 pub static mut NUM_COMMENTS: usize = 0;
@@ -42,14 +42,14 @@ pub struct Element {
     author: String,
     data: String,
     kind: String,
-    post_hint: String,
     url: String, //url_overridden_by_dest
     ups: usize,
     pub children: Vec<Element>,
-    created_utc: String,
+    edited: bool,
     depth: String,
     permalink: String,
     id: String,
+    over_18: bool,
 }
 
 impl PartialEq for Element{
@@ -60,35 +60,38 @@ impl PartialEq for Element{
 
 impl std::fmt::Debug for Element {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let children = self.children.iter().map(|x| format!("{x:?}")).collect::<String>();
-
+        if self.data.is_empty() || self.author.is_empty() {
+            return std::fmt::Result::Err(std::fmt::Error::default())
+        }
         match get_safe!(FORMAT){
             ElementFormat::Default=>{
-                if !self.data.is_empty() || !self.author.is_empty() {
-                    let indent_char = " ";
-                    //let secondary_indent_char = " ";
-                    let indent = indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
-                    let ups_indent = indent_char.repeat(self.ups.to_string().len());
-                    //TODO: make this more readable
-                    return f.write_fmt(format_args!(
-                        "{}{} {} {}: {}\n{}",
-                        indent,
-                        self.depth,
-                        self.ups,
-                        self.author,
-                        self.data.replace(
-                            '\n',
-                            &(String::from('\n')
-                                + &(indent.to_string()
-                                    + &indent_char.repeat(self.author.len() + 4)
-                                    + &ups_indent
-                                    + " ")) //.replace(indent_char, secondary_indent_char))
-                        ),
-                        children
-                    ));
-                }
+                let children = self.children.iter().map(|x| format!("{x:?}")).collect::<String>();
+                
+                let indent_char = " ";
+                //let secondary_indent_char = " ";
+                let indent = indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
+                let ups_indent = indent_char.repeat(self.ups.to_string().len());
+                //TODO: make this more readable
+                return f.write_fmt(format_args!(
+                    "{}{} {} {}: {}\n{}",
+                    indent,
+                    self.depth,
+                    self.ups,
+                    self.author,
+                    self.data.replace(
+                        '\n',
+                        &(String::from('\n')
+                            + &(indent.to_string()
+                                + &indent_char.repeat(self.author.len() + 4)
+                                + &ups_indent
+                                + " ")) //.replace(indent_char, secondary_indent_char))
+                    ),
+                    children
+                ));
+
             },
             ElementFormat::HTML=>{
+                let children = self.children.iter().map(|x| format!("{x:?}")).collect::<String>();
                 let indent_char = " ";
                 let indent = "\t".to_owned()+&indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
                 return f.write_fmt(format_args!(
@@ -104,12 +107,34 @@ impl std::fmt::Debug for Element {
                     self.data,
                     
                 ))
+            },
+            ElementFormat::JSON=>{
+                fn parse_json_element(elem : &Element)->json::object::Object{
+                    let mut json_object = json::object::Object::new();
+                    json_object.insert("author",JsonValue::String(elem.author.clone()));
+                    json_object.insert("data",JsonValue::String(elem.data.clone()));
+                    json_object.insert("ups",JsonValue::from(elem.ups));
+                    json_object.insert("edited",JsonValue::from(elem.edited));
+                    json_object.insert("depth",JsonValue::String(elem.depth.to_string()));
+                    json_object.insert("id",JsonValue::String(elem.id.clone()));
+                    json_object.insert("kind",JsonValue::String(elem.kind.clone()));
+                    json_object.insert("permalink",JsonValue::String(elem.permalink.clone()));
+                    //json_object.insert("post_hint",JsonValue::String(elem.post_hint.clone()));
+                    json_object.insert("url",JsonValue::String(elem.url.clone()));
+                    json_object.insert("over_18",JsonValue::from(elem.over_18));
+                    for child in &elem.children{
+                        json_object.insert("children", json::from(parse_json_element(child)));
+                    }
+                    json_object
+                }
+                let json_object = parse_json_element(self);
+                return f.write_fmt(format_args!(
+                    "{},\n",
+                    json_object.pretty(1)
+                ))
             }
     
     }
-
-
-        Ok(())
     }
 }
 
@@ -189,14 +214,15 @@ impl Element {
                 Ok(o)=>o,
                 _=>0usize
             },
-            post_hint: get_data_wrapper!(data, "post_hint", String::new()),
+            //post_hint: get_data_wrapper!(data, "post_hint", String::new()),
             url : get_data_wrapper!(data,url_overridden_by_dest,String::new()),
             //a hacky way, but "kind" attribute is higher in the json tree so it would be a pain in the butt to get it that way
             kind: get_data_wrapper!(data,name,String::new())[0..2].to_owned(),
-            created_utc: get_data_wrapper!(data, "created_utc",String::new()),
+            edited: if get_data_wrapper!(data, edited,String::from("false")) == String::from("true"){true} else{false},
             depth: get_data_wrapper!(data,depth,"0".to_string()),
             permalink: get_data_wrapper!(data,permalink,String::new()),
             id: get_data_wrapper!(data,id,String::new()),
+            over_18: if get_data_wrapper!(data, over_18,String::from("false")) == String::from("true"){true} else{false},
         })
     }
 

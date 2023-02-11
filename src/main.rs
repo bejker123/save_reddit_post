@@ -234,6 +234,12 @@ async fn main() {
                 Ok(())=>{},
                 Err(e)=>panic!("fail.\nError: {e}")
             }
+        },
+        ElementFormat::JSON=>{
+            match writeln!(output,"{{\n\"data\":["){
+                Ok(())=>{},
+                Err(e)=>panic!("fail.\nError: {e}")
+            }
         }
     }
         
@@ -257,6 +263,12 @@ async fn main() {
         },
         ElementFormat::HTML=>{
             match writeln!(output,"\t</div>\n</body>\n</html>"){
+                Ok(())=>{},
+                Err(e)=>panic!("fail.\nError: {e}")
+            }
+        },
+        ElementFormat::JSON=>{
+            match writeln!(output,"]}}"){
                 Ok(())=>{},
                 Err(e)=>panic!("fail.\nError: {e}")
             }

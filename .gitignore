@@ -1,4 +1,3 @@
 /target
 *.tmp
-output.html
-output.txt
+output.*

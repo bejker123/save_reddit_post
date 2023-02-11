@@ -82,6 +82,10 @@ impl CLI {
                             "html" | "h"=>{
                                 unsafe{crate::element::FORMAT = crate::element::ElementFormat::HTML}
                                 save_path = String::from("output.html")
+                            },
+                            "json" | "j"=>{
+                                unsafe{crate::element::FORMAT = crate::element::ElementFormat::JSON}
+                                save_path = String::from("output.json")
                             }
                             _=>{
                                 println!("Invalid format: {}", args[i+1]);
