@@ -1,3 +1,4 @@
+#![feature(doc_cfg)]
 extern crate tokio;
 
 #[macro_use]
@@ -9,7 +10,7 @@ use cli::*;
 
 mod tests;
 
-use std::{io::Write, time::SystemTime, process::exit};
+use std::{io::Write, time::SystemTime, process::exit, sync::Arc, sync::Mutex,};
 
 async fn request(url : String) -> reqwest::Response{
     let client = reqwest::Client::new();
@@ -32,6 +33,94 @@ fn convert_time(t : f64) -> String{
     }else{
         ((t/3600.0) as i32).to_string() + "h " + &convert_time(t % 3600.0)
     }
+}
+
+async fn get_more_element(base_url : String,idx : Arc<Mutex<f64>>,more_start : SystemTime,last_line_length :  Arc<Mutex<usize>>,elements : Arc<Mutex<Vec<Element>>>){
+    //dbg!(base_url.clone());
+    //build the url
+    let url = base_url;//cli.base_url.clone() + more_element + ".json";
+    let res = request(url).await;
+    
+    let data = match res.text().await {
+        Ok(o) => o,
+        _ => todo!(), //TODO: add restarting
+    };
+    
+    let json_data = json::parse(&data).unwrap();
+    
+    //Parse json data to elements
+    let mut e = Element::init(&json_data);
+    //ELEMENTS_COUNT -= 1; //TODO: remove this?
+    
+    {
+        let idx_ = idx.lock().unwrap().clone();
+        let last_line_length_ = last_line_length.lock().unwrap().clone();
+
+        //calculate % of progress as a 64bit float 64
+        let precent = idx_/(get_safe!(MORE_ELEMENTS).len() as f64)*100f64;
+        
+        //get time passed since start of getting 'more' elements 
+        let passed = std::time::SystemTime::now().duration_since(more_start).unwrap().as_millis();
+        
+        //Get estimated time
+        let eta = get_safe!(MORE_ELEMENTS).len() as f64 / (idx_/ passed as f64);
+        
+        //Format the line to be printed
+        let mut line = format!("{idx_} / {} {:.2}% runtime: {} ETA: {}",
+        get_safe!(MORE_ELEMENTS).len(),precent,
+        convert_time(passed as f64/1000f64),
+        convert_time((eta - passed as f64)/1000f64));
+        
+        let line_length = line.len();
+        
+        //Make sure there is no residual chars from last line
+        if line_length < last_line_length_{
+            line += &" ".repeat(last_line_length_-line_length);
+        }
+        let mut last_line_length_= last_line_length.lock().unwrap();
+        *last_line_length_ = line_length;
+        
+        //Print the line and flush stdout
+        //If you don;t flush stdout not every line will be printed,
+        //Because print! doesn't flush as oppose to println!
+        print!("\r{line}");
+        std::io::stdout().flush().unwrap();
+        let mut idx_ = idx.lock().unwrap();
+        *idx_ += 1.0;
+    }
+    
+    //
+    {
+        let mut elements_ = elements.lock().unwrap();
+        if e.len() < 2{
+                elements_.append(&mut e[0].children);
+                return
+            }
+            
+            //Recursively check every element, and if the first element matches appedn to it
+            fn app(x : &mut Vec<Element>,y : &mut Vec<Element>){
+                for element in &mut *y{
+                    if x.is_empty(){
+                        break;
+                    }
+                    if *element == x[0]{
+                        x.remove(0);
+                        unsafe{ELEMENTS_COUNT -= 1;}
+                        // print!("Append ");
+                        element.children.append(x);
+                        break;
+                    }
+                }
+                for e in y{
+                    app(x,&mut e.children);
+                }
+            }
+            
+            app(&mut e,&mut elements_);
+    }
+        // print!("Elements: {} delta: {}              \r",ELEMENTS_COUNT,start.elapsed().unwrap().as_millis());
+    //println!();
+    
 }
 
 #[tokio::main]
@@ -93,7 +182,7 @@ async fn main() {
     
     let start = std::time::SystemTime::now();
     
-    let mut elements = Element::init(&json_data);
+    let elements = Element::init(&json_data);
     
     if !elements.is_empty(){
         println!("success.");
@@ -104,100 +193,42 @@ async fn main() {
     
     let more_start = std::time::SystemTime::now();
     
-    let mut last_line_length = 0usize;
+    let last_line_length = Arc::new(Mutex::new(0usize));
     
     //Yes I know representing index as a float is dumb.
-    let mut idx = 1f64;
+    let idx = Arc::new(Mutex::new(1f64));
     
+    let elements = Arc::new(Mutex::new(elements));
+
     //'more' elements
     if get_safe!(MORE_ELEMENTS_COUNT) > 0{
         println!("Getting 'more' elements:");
         
+        let mut threads : Vec<tokio::task::JoinHandle<_>> = Vec::new();
         //Get more elements from the 'more' listing
+        //TODO: add max nr of threads!!!
         for more_element in &get_safe!(MORE_ELEMENTS) {
-            //build the url
-            let url = cli.base_url.clone() + more_element + ".json";
-            let res = request(url).await;
-            
-            let data = match res.text().await {
-                Ok(o) => o,
-                _ => todo!(), //TODO: add restarting
-            };
-            
-            let json_data = json::parse(&data).unwrap();
-            
-            //Parse json data to elements
-            let mut e = Element::init(&json_data);
-            //ELEMENTS_COUNT -= 1; //TODO: remove this?
-            
-            //calculate % of progress as a 64bit float 64
-            let precent = idx/(get_safe!(MORE_ELEMENTS).len() as f64)*100f64;
-            
-            //get time passed since start of getting 'more' elements 
-            let passed = std::time::SystemTime::now().duration_since(more_start).unwrap().as_millis();
-            
-            //Get estimated time
-            let eta = get_safe!(MORE_ELEMENTS).len() as f64 / (idx/ passed as f64);
-            
-            //Format the line to be printed
-            let mut line = format!("{idx} / {} {:.2}% runtime: {} ETA: {}",
-            get_safe!(MORE_ELEMENTS).len(),precent,
-            convert_time(passed as f64/1000f64),
-            convert_time((eta - passed as f64)/1000f64));
-            
-            let line_length = line.len();
-            
-            //Make sure there is no residual chars from last line
-            if line_length < last_line_length{
-                line += &" ".repeat(last_line_length-line_length);
-            }
-            last_line_length = line_length;
-            
-            //Print the line and flush stdout
-            //If you don;t flush stdout not every line will be printed,
-            //Because print! doesn't flush as oppose to println!
-            print!("\r{line}");
-            std::io::stdout().flush().unwrap();
-            idx += 1.0;
-            
-            //
-            if e.len() < 2{
-                elements.append(&mut e[0].children);
-                // let mut file = std::fs::OpenOptions::new()
-                // .append(true)
-                // .create(true)
-                // .open("discarded.tmp")
-                // .unwrap();
-                // for x in &e{
-                    //     file.write_fmt(format_args!("{x:?}\n"));
-                    // }
-                    continue;
-                }
-                
-                //Recursively check every element, and if the first element matches appedn to it
-                fn app(x : &mut Vec<Element>,y : &mut Vec<Element>){
-                    for element in &mut *y{
-                        if x.is_empty(){
-                            break;
-                        }
-                        if *element == x[0]{
-                            x.remove(0);
-                            unsafe{ELEMENTS_COUNT -= 1;}
-                            // print!("Append ");
-                            element.children.append(x);
-                            break;
-                        }
-                    }
-                    for e in y{
-                        app(x,&mut e.children);
-                    }
-                }
-                
-                app(&mut e,&mut elements);
-                // print!("Elements: {} delta: {}              \r",ELEMENTS_COUNT,start.elapsed().unwrap().as_millis());
-            }
-            println!();
+            let x = cli.base_url.clone() + &more_element.clone() + ".json";
+            let (y,z,w) = (Arc::clone(&idx),Arc::clone(&last_line_length),Arc::clone(&elements));
+            let t = tokio::spawn(async move {
+                //println!("{}",y.lock().unwrap());
+                get_more_element(x.clone(),y,more_start,z,w).await;
+                //println!("Thread end");
+            });
+            threads.push(t);
         }
+        println!("{} threads running",threads.len());
+        loop{
+            //dbg!(threads.clone());
+           // dbg!(idx.lock().unwrap());
+           //dbg!(last_line_length.lock().unwrap());
+            if get_safe!(MORE_ELEMENTS).len() as f64 == idx.lock().unwrap().clone(){
+            break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(1000));
+        }
+    }
+
     if get_safe!(ELEMENTS_COUNT) == 1 {
         panic!("Error, returned 0 elements!");
     }
@@ -247,7 +278,7 @@ async fn main() {
     //Write every element to the output.
     //For formatting see element.rs:
     //                   impl std::fmt::Debug for Element
-    for elem in elements {
+    for elem in elements.lock().unwrap().iter() {
         match write!(output,"{elem:?}") {
             //Ignore success
             Ok(()) => {},

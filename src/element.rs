@@ -63,7 +63,7 @@ impl std::fmt::Debug for Element {
         if self.data.is_empty() || self.author.is_empty() {
             return std::fmt::Result::Err(std::fmt::Error::default())
         }
-        match get_safe!(FORMAT){
+        return match get_safe!(FORMAT){
             ElementFormat::Default=>{
                 let children = self.children.iter().map(|x| format!("{x:?}")).collect::<String>();
                 
@@ -72,7 +72,7 @@ impl std::fmt::Debug for Element {
                 let indent = indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
                 let ups_indent = indent_char.repeat(self.ups.to_string().len());
                 //TODO: make this more readable
-                return f.write_fmt(format_args!(
+                f.write_fmt(format_args!(
                     "{}{} {} {}: {}\n{}",
                     indent,
                     self.depth,
@@ -87,16 +87,18 @@ impl std::fmt::Debug for Element {
                                 + " ")) //.replace(indent_char, secondary_indent_char))
                     ),
                     children
-                ));
+                ))
 
             },
             ElementFormat::HTML=>{
                 let children = self.children.iter().map(|x| format!("{x:?}")).collect::<String>();
                 let indent_char = " ";
                 let indent = "\t".to_owned()+&indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
-                return f.write_fmt(format_args!(
+                let url = if !self.url.is_empty() {format!("<a href=\"{}\">{}</a>",self.url,self.url)} else{String::new()};
+                f.write_fmt(format_args!(
                     "\n{indent}<div class=\"element\">\n\t
                     {indent}<h4><a href=\"{}\">{}</a> ⬆️{}:</h4>
+                    {url}
                     <span>{}</span>
                     <ul>{children}</ul>
                     \n{indent}
@@ -104,7 +106,7 @@ impl std::fmt::Debug for Element {
                     String::from("https://reddit.com")+&self.permalink,
                     self.author,
                     self.ups,
-                    self.data,
+                    self.data.strip_prefix(&self.url).unwrap(),
                     
                 ))
             },
@@ -128,9 +130,9 @@ impl std::fmt::Debug for Element {
                     json_object
                 }
                 let json_object = parse_json_element(self);
-                return f.write_fmt(format_args!(
+                f.write_fmt(format_args!(
                     "{},\n",
-                    json_object.pretty(1)
+                    json_object.pretty(4)
                 ))
             }
     
@@ -218,11 +220,11 @@ impl Element {
             url : get_data_wrapper!(data,url_overridden_by_dest,String::new()),
             //a hacky way, but "kind" attribute is higher in the json tree so it would be a pain in the butt to get it that way
             kind: get_data_wrapper!(data,name,String::new())[0..2].to_owned(),
-            edited: if get_data_wrapper!(data, edited,String::from("false")) == String::from("true"){true} else{false},
+            edited: get_data_wrapper!(data, edited,String::from("false")) == *"true",
             depth: get_data_wrapper!(data,depth,"0".to_string()),
             permalink: get_data_wrapper!(data,permalink,String::new()),
             id: get_data_wrapper!(data,id,String::new()),
-            over_18: if get_data_wrapper!(data, over_18,String::from("false")) == String::from("true"){true} else{false},
+            over_18: get_data_wrapper!(data, over_18,String::from("false")) == *"true",
         })
     }
 
