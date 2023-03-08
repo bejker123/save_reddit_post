@@ -36,9 +36,8 @@ fn convert_time(t : f64) -> String{
 }
 
 async fn get_more_element(base_url : String,idx : Arc<Mutex<f64>>,more_start : SystemTime,last_line_length :  Arc<Mutex<usize>>,elements : Arc<Mutex<Vec<Element>>>){
-    //dbg!(base_url.clone());
     //build the url
-    let url = base_url;//cli.base_url.clone() + more_element + ".json";
+    let url = base_url;
     let res = request(url).await;
     
     let data = match res.text().await {
@@ -190,7 +189,6 @@ async fn main() {
         println!("fail.");
     }
     
-    
     let more_start = std::time::SystemTime::now();
     
     let last_line_length = Arc::new(Mutex::new(0usize));
@@ -205,28 +203,34 @@ async fn main() {
         println!("Getting 'more' elements:");
         
         let mut threads : Vec<tokio::task::JoinHandle<_>> = Vec::new();
+        let max_threads = 200;
+        let threads_running = Arc::new(Mutex::new(0usize));
         //Get more elements from the 'more' listing
-        //TODO: add max nr of threads!!!
         for more_element in &get_safe!(MORE_ELEMENTS) {
             let x = cli.base_url.clone() + &more_element.clone() + ".json";
-            let (y,z,w) = (Arc::clone(&idx),Arc::clone(&last_line_length),Arc::clone(&elements));
+            let (idx,
+                last_line_length,
+                elements,
+                threads_running_) = (Arc::clone(&idx),Arc::clone(&last_line_length),Arc::clone(&elements),Arc::clone(&threads_running));
             let t = tokio::spawn(async move {
-                //println!("{}",y.lock().unwrap());
-                get_more_element(x.clone(),y,more_start,z,w).await;
-                //println!("Thread end");
+                *threads_running_.lock().unwrap() += 1;
+                get_more_element(x.clone(),idx,more_start,last_line_length,elements).await;
+                *threads_running_.lock().unwrap() -= 1;
             });
             threads.push(t);
+            while *threads_running.lock().unwrap() >= max_threads{
+                std::thread::sleep(std::time::Duration::from_millis(100));
+            }
+            std::thread::sleep(std::time::Duration::from_millis(100));
+
         }
-        println!("{} threads running",threads.len());
         loop{
-            //dbg!(threads.clone());
-           // dbg!(idx.lock().unwrap());
-           //dbg!(last_line_length.lock().unwrap());
-            if get_safe!(MORE_ELEMENTS).len() as f64 == idx.lock().unwrap().clone(){
-            break;
+            if *threads_running.lock().unwrap() == 0{
+                break;
             }
             std::thread::sleep(std::time::Duration::from_millis(1000));
         }
+        println!();
     }
 
     if get_safe!(ELEMENTS_COUNT) == 1 {
