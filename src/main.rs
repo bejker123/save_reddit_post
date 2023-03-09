@@ -123,7 +123,6 @@ async fn main() {
             if *threads_running.lock().unwrap() == 0 {
                 break;
             }
-            //println!("{}",*threads_running.lock().unwrap());
             std::thread::sleep(std::time::Duration::from_millis(100));
         }
         println!();
