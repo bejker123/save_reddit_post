@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-
 //Allow this, bcs when running tests compiler throws a dead code warning which is not true.
 #[derive(PartialEq, Eq, Debug)]
 #[allow(clippy::upper_case_acronyms)] //my preference
@@ -21,14 +20,13 @@ impl CLI {
         println!(" -o/--output don't save to file just output to stdout");
         println!(" -f/--format set the format (not case sensitive)");
         println!(" Valid formats:");
-        println!("{}Default/d"," ".repeat(15));
-        println!("{}HTML/h"," ".repeat(15));
-        
+        println!("{}Default/d", " ".repeat(15));
+        println!("{}HTML/h", " ".repeat(15));
 
-        if invalid_usage{
+        if invalid_usage {
             println!("Invalid usage!");
         }
-        if !cfg!(test){
+        if !cfg!(test) {
             std::process::exit(invalid_usage as i32);
         }
     }
@@ -74,21 +72,27 @@ impl CLI {
                         }
                         skip_count += 1;
                         let format = args[i + 1].clone().to_lowercase();
-                        match format.as_str(){
-                            "default" | "d"=>{
-                                unsafe{crate::element::FORMAT = crate::element::ElementFormat::Default}
+                        match format.as_str() {
+                            "default" | "d" => {
+                                unsafe {
+                                    crate::element::FORMAT = crate::element::ElementFormat::Default
+                                }
                                 save_path = String::from("output.txt")
-                            },
-                            "html" | "h"=>{
-                                unsafe{crate::element::FORMAT = crate::element::ElementFormat::HTML}
+                            }
+                            "html" | "h" => {
+                                unsafe {
+                                    crate::element::FORMAT = crate::element::ElementFormat::HTML
+                                }
                                 save_path = String::from("output.html")
-                            },
-                            "json" | "j"=>{
-                                unsafe{crate::element::FORMAT = crate::element::ElementFormat::JSON}
+                            }
+                            "json" | "j" => {
+                                unsafe {
+                                    crate::element::FORMAT = crate::element::ElementFormat::JSON
+                                }
                                 save_path = String::from("output.json")
                             }
-                            _=>{
-                                println!("Invalid format: {}", args[i+1]);
+                            _ => {
+                                println!("Invalid format: {}", args[i + 1]);
                                 Self::help(true);
                             }
                         }
@@ -98,14 +102,14 @@ impl CLI {
                     }
                 }
             }
-            match args.last(){
-                Some(o)=> url = o.to_string(),
-                _=>panic!("Failed to get last of args!")
-            } 
+            match args.last() {
+                Some(o) => url = o.to_string(),
+                _ => panic!("Failed to get last of args!"),
+            }
             //let (url,_) = Self::parse_url(args[args.len() - 1].to_owned());
         }
 
-        let (url,base_url) = CLI::parse_url(url);
+        let (url, base_url) = CLI::parse_url(url);
         CLI {
             url,
             base_url,
@@ -114,7 +118,7 @@ impl CLI {
         }
     }
 
-    pub fn parse_url(mut url: String) -> (String,String) {
+    pub fn parse_url(mut url: String) -> (String, String) {
         url = url.replace('\'', "");
         url = url.replace(' ', "");
         url = url.replace('\n', "");
@@ -142,7 +146,7 @@ impl CLI {
 
         if url.ends_with('/') {
             url = url[0..url.len() - 1].to_string();
-        }else{
+        } else {
             base_url += "/";
         }
 
@@ -150,6 +154,6 @@ impl CLI {
             url += ".json";
         }
 
-        (url,base_url)
+        (url, base_url)
     }
 }
