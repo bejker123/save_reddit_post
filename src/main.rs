@@ -8,6 +8,9 @@ use element::*;
 mod cli;
 use cli::*;
 
+mod output_writer;
+use output_writer::*;
+
 mod tests;
 
 use async_recursion::async_recursion;
@@ -272,61 +275,40 @@ async fn main() {
     } else {
         print!("Writing to stdout: ");
     }
+    let mut ow = OutputWriter::new();
+    ow = ow.set_output(output);
 
     //Write begining of the file:
     match get_safe!(FORMAT) {
-        ElementFormat::Default => {
-            match writeln!(
-                output,
-                "# {{indent}} {{ups}} {{author}}: {{contnet}}\n\nSource: {}",
-                cli.base_url
-            ) {
-                Ok(()) => {}
-                Err(e) => panic!("fail.\nError: {e}"),
-            }
-        }
-        ElementFormat::HTML => {
-            match writeln!(
-                output,
-                "{}",
-                include_str!("html_file.html").replace("{title}", &cli.base_url)
-            ) {
-                Ok(()) => {}
-                Err(e) => panic!("fail.\nError: {e}"),
-            }
-        }
-        ElementFormat::JSON => match writeln!(output, "{{\n\"data\":[") {
-            Ok(()) => {}
-            Err(e) => panic!("fail.\nError: {e}"),
-        },
+        ElementFormat::Default => ow.content += &format!("# {{indent}} {{ups}} {{author}}: {{contnet}}\n\nSource: {}", cli.base_url),
+        ElementFormat::HTML => ow.content += &include_str!("html_file.html").replace("{title}", &cli.base_url),
+        ElementFormat::JSON => ow.content += "{\"data\":[",
     }
 
     //Write every element to the output.
     //For formatting see element.rs:
     //                   impl std::fmt::Debug for Element
     for elem in elements.lock().unwrap().iter() {
-        match write!(output, "{elem:?}") {
-            //Ignore success
-            Ok(()) => {}
-            //If failed to write to output, panic and finish execution.
-            Err(e) => panic!("fail.\nError: {e}"),
-        }
+        ow.content += &format!("{elem:?}")
     }
 
     //Write the end:
     match get_safe!(FORMAT) {
         ElementFormat::Default => {}
-        ElementFormat::HTML => match writeln!(output, "\t</div>\n</body>\n</html>") {
-            Ok(()) => {}
-            Err(e) => panic!("fail.\nError: {e}"),
-        },
-        ElementFormat::JSON => match writeln!(output, "]}}") {
-            Ok(()) => {}
-            Err(e) => panic!("fail.\nError: {e}"),
-        },
+        ElementFormat::HTML => ow.content += "\t</div>\n</body>\n</html>",
+        ElementFormat::JSON => {
+            if let Some(r) = ow.content.clone().strip_suffix(",\n"){
+                ow.content = r.to_owned();
+            }
+            ow.content += "\n]}"}
+        ,
     }
 
-    println!("success");
+    match ow.write(){
+        Ok(_)=>println!("success"),
+        Err(e)=>panic!("ow.write() error:\n{}",e)
+    }
+
 
     //Print last bit of debug data
     // println!("MORE_ELEMENTS_COUNT: {MORE_ELEMENTS_COUNT}\nMORE_ELEMENTS.len(): {}\n{}",MORE_ELEMENTS.len(),MORE_ELEMENTS_COUNT == MORE_ELEMENTS.len());
