@@ -76,7 +76,7 @@ async fn get_more_element(
         let last_line_length_ = *last_line_length.lock().unwrap();
 
         //calculate % of progress as a 64bit float 64
-        let precent = idx_ / (std::cmp::min(get_safe!(MORE_ELEMENTS_COUNT),max_comments) as f64) * 100f64;
+        let precent = idx_ / (get_safe!(MORE_ELEMENTS).len() as f64) * 100f64;
 
         //get time passed since start of getting 'more' elements
         let passed = std::time::SystemTime::now()
@@ -85,12 +85,12 @@ async fn get_more_element(
             .as_millis();
 
         //Get estimated time
-        let eta = std::cmp::min(get_safe!(MORE_ELEMENTS_COUNT),max_comments) as f64 / (idx_ / passed as f64);
+        let eta = get_safe!(MORE_ELEMENTS).len() as f64 / (idx_ / passed as f64);
 
         //Format the line to be printed
         let mut line = format!(
             "{idx_} / {} {:.2}% runtime: {} ETA: {}",
-            std::cmp::min(get_safe!(MORE_ELEMENTS_COUNT),max_comments),
+            get_safe!(MORE_ELEMENTS).len(),
             precent,
             convert_time(passed as f64 / 1000f64),
             convert_time((eta - passed as f64) / 1000f64)
