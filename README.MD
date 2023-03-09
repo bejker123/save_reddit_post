@@ -36,7 +36,10 @@ It will go through many changes in the future!
 - [x] Add getting all comments on a post 
 - [x] Add formatting, ex. HTML
 - [x] Add safe wrappers for static mut members 
-- [ ] Add more command line options like filtering and max comments count
+- [ ] Add more command line
+  - [x] max comments count 
+  - [x] sorting 
+  - [ ] filtering 
 
 
 ## Contributing
