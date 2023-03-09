@@ -400,7 +400,6 @@ impl Element {
                         unsafe {
                             ELEMENTS_COUNT -= 1;
                         }
-                        // print!("Append ");
                         element.children.append(x);
                         break;
                     }
@@ -412,8 +411,6 @@ impl Element {
     
             app(&mut e, &mut elements_);
         }
-        // print!("Elements: {} delta: {}              \r",ELEMENTS_COUNT,start.elapsed().unwrap().as_millis());
-        //println!();
     }
     
 

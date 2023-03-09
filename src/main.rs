@@ -205,7 +205,6 @@ async fn main() {
     }
 
     //Print last bit of debug data
-    // println!("MORE_ELEMENTS_COUNT: {MORE_ELEMENTS_COUNT}\nMORE_ELEMENTS.len(): {}\n{}",MORE_ELEMENTS.len(),MORE_ELEMENTS_COUNT == MORE_ELEMENTS.len());
     //TODO: fix descrepency!!!
     print!(
         "Successfully got {} element{} NUM_COMMENTS: {}",

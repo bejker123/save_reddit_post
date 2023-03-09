@@ -175,7 +175,6 @@ impl CLI {
                 Some(o) => url = o.to_string(),
                 _ => panic!("Failed to get last of args!"),
             }
-            //let (url,_) = Self::parse_url(args[args.len() - 1].to_owned());
         }
 
         let (url, base_url) = CLI::parse_url(url);
