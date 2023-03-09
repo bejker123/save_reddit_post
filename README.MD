@@ -47,7 +47,7 @@ It will go through many changes in the future!
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-Please make sure to update tests as appropriate. At this moment, this is not applicable, since no tests are present.
+Please make sure to update tests as appropriate.
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
