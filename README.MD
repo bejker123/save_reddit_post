@@ -33,6 +33,7 @@ It will go through many changes in the future!
 ## Roadmap
 
 - [ ] Change first arg to url?
+- [ ] Add some url validation (like if contains reddit.com)
 - [x] Add getting all comments on a post 
 - [x] Add formatting, ex. HTML
 - [x] Add safe wrappers for static mut members 
