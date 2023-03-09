@@ -30,7 +30,7 @@ cargo run -- #pass arguments after "--"
 Please note that this repo is in its early stages.
 It will go through many changes in the future!
 
-## Roadmap
+## Roadmap/Goals
 
 - [ ] Change first arg to url?
 - [ ] Add some url validation (like if contains reddit.com)
@@ -41,6 +41,7 @@ It will go through many changes in the future!
   - [x] max comments count 
   - [x] sorting 
   - [ ] filtering 
+- [ ] Add more cli verbosity options
 
 
 ## Contributing
