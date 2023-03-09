@@ -1,4 +1,3 @@
-#![feature(doc_cfg)]
 extern crate tokio;
 
 #[macro_use]
