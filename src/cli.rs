@@ -37,9 +37,9 @@ impl CLI {
         let padding = " ".repeat(ll.len());
         println!("{}",ll);
         println!("{}default", padding);
-        println!("{}rand", padding);
-        println!("{}upvotes", padding);
-        println!("{}upvotes-asc", padding);
+        println!("{}rand/random", padding);
+        println!("{}upvotes/ups", padding);
+        println!("{}upvotes/ups-asc", padding);
         println!("{}comments by nr of child comments", padding);
         println!("{}comments-asc", padding);
         println!("{}new", padding);
@@ -150,17 +150,17 @@ impl CLI {
                         let sort_style_ = args[i + 1].clone().trim().to_lowercase();
                         match sort_style_.as_str(){
                             "default"=>{},
-                            "rand"=>sort_style = ElementSort::Rand,
-                            "upvotes"=>sort_style = ElementSort::Upvotes(false),
-                            "upvotes-asc"=>sort_style = ElementSort::Upvotes(true),
-                            "comments"=>sort_style = ElementSort::Comments(false),
-                            "comments-asc"=>sort_style = ElementSort::Comments(true),
-                            "new"=>sort_style = ElementSort::Date(false),
-                            "old"=>sort_style = ElementSort::Date(true),
-                            "edited"=>sort_style = ElementSort::EditedDate(false), 
-                            "edited-asc"=>sort_style = ElementSort::EditedDate(true), 
+                            "rand" | "random" => sort_style = ElementSort::Rand,
+                            "upvotes" | "ups" => sort_style = ElementSort::Upvotes(false),
+                            "upvotes-asc" | "ups-asc" => sort_style = ElementSort::Upvotes(true),
+                            "comments" => sort_style = ElementSort::Comments(false),
+                            "comments-asc" => sort_style = ElementSort::Comments(true),
+                            "new" => sort_style = ElementSort::Date(false),
+                            "old" => sort_style = ElementSort::Date(true),
+                            "edited" => sort_style = ElementSort::EditedDate(false), 
+                            "edited-asc" => sort_style = ElementSort::EditedDate(true), 
                             //for adding more: "tmp"=>sort_style = ElementSort::tmp, 
-                            _=>{
+                            _ => {
                                 println!("Invalid format: {}", args[i + 1]);
                                 Self::help(true);
                             }
