@@ -10,154 +10,12 @@ use cli::*;
 mod output_writer;
 use output_writer::*;
 
+mod utils;
+use utils::*;
+
 mod tests;
 
-use async_recursion::async_recursion;
-use std::{io::Write, process::exit, sync::Arc, sync::Mutex, time::SystemTime, thread};
-
-#[async_recursion]
-async fn request(url: String, retries: Option<usize>) -> reqwest::Response {
-    let retries = retries.unwrap_or(0);
-    let client = reqwest::Client::new();
-    match client.get(url.clone()).send().await {
-        Ok(o) => o,
-        Err(e) => {
-            if retries >= 3 {
-                panic!("Max retries exeeded, error: {}", e);
-            } else {
-                request(url, Some(retries + 1)).await
-            }
-        }
-    }
-}
-
-//Convert time in seconds to a more readable format
-// Xh Ymin Zs
-fn convert_time(t: f64) -> String {
-    if t == 0.0 {
-        String::new()
-    } else if t < 60.0 {
-        format!("{t:.2}s")
-    } else if t < 3600.0 {
-        ((t / 60.0) as i32).to_string() + "min " + &convert_time(t % 60.0)
-    } else {
-        ((t / 3600.0) as i32).to_string() + "h " + &convert_time(t % 3600.0)
-    }
-}
-
-//TODO: move this to element.rs
-async fn get_more_element(
-    base_url: String,
-    idx: Arc<Mutex<f64>>,
-    more_start: SystemTime,
-    last_line_length: Arc<Mutex<usize>>,
-    elements: Arc<Mutex<Vec<Element>>>,
-    max_comments : usize
-) {
-    if get_safe!(ELEMENTS_COUNT) >= max_comments{
-        return
-    }
-    //build the url
-    let url = base_url;
-    let res = request(url, None).await;
-
-    let data = match res.text().await {
-        Ok(o) => o,
-        _ => todo!(), //TODO: add restarting
-    };
-
-    let json_data = json::parse(&data).unwrap();
-
-    //Parse json data to elements
-    let mut e = Element::init(&json_data,max_comments);
-
-    {
-        let idx_ = *idx.lock().unwrap();
-        let last_line_length_ = *last_line_length.lock().unwrap();
-
-        //calculate % of progress as a 64bit float 64
-        let precent = idx_ / (get_safe!(MORE_ELEMENTS).len() as f64) * 100f64;
-
-        //get time passed since start of getting 'more' elements
-        let passed = std::time::SystemTime::now()
-            .duration_since(more_start)
-            .unwrap()
-            .as_millis();
-
-        //Get estimated time
-        let eta = get_safe!(MORE_ELEMENTS).len() as f64 / (idx_ / passed as f64);
-
-        //Format the line to be printed
-        let mut line = format!(
-            "{idx_} / {} {:.2}% runtime: {} ETA: {}",
-            get_safe!(MORE_ELEMENTS).len(),
-            precent,
-            convert_time(passed as f64 / 1000f64),
-            convert_time((eta - passed as f64) / 1000f64)
-        );
-
-        let line_length = line.len();
-
-        //Make sure there is no residual chars from last line
-        if line_length < last_line_length_ {
-            line += &" ".repeat(last_line_length_ - line_length);
-        }
-        let mut last_line_length_ = last_line_length.lock().unwrap();
-        *last_line_length_ = line_length;
-
-        //Print the line and flush stdout
-        //If you don;t flush stdout not every line will be printed,
-        //Because print! doesn't flush as oppose to println!
-        print!("\r{line}");
-        std::io::stdout().flush().unwrap();
-        let mut idx_ = idx.lock().unwrap();
-        *idx_ += 1.0;
-    }
-
-    //
-    {
-        let mut elements_ = match elements.lock(){
-            Ok(o)=>o,
-            Err(e)=>{
-                println!("{:?} panic:\n{}",thread::current(),e);
-                return;
-            }
-        };
-        if e.len() < 2 {
-            if e.len() > 0{
-                if e[0].children.len() > 0{
-                    elements_.append(&mut e[0].children);
-                }
-            }
-            return;
-        }
-
-        //Recursively check every element, and if the first element matches appedn to it
-        fn app(x: &mut Vec<Element>, y: &mut Vec<Element>) {
-            for element in &mut *y {
-                if x.is_empty() {
-                    break;
-                }
-                if *element == x[0] {
-                    x.remove(0);
-                    unsafe {
-                        ELEMENTS_COUNT -= 1;
-                    }
-                    // print!("Append ");
-                    element.children.append(x);
-                    break;
-                }
-            }
-            for e in y {
-                app(x, &mut e.children);
-            }
-        }
-
-        app(&mut e, &mut elements_);
-    }
-    // print!("Elements: {} delta: {}              \r",ELEMENTS_COUNT,start.elapsed().unwrap().as_millis());
-    //println!();
-}
+use std::{io::Write, process::exit, sync::Arc, sync::Mutex, time::SystemTime};
 
 #[tokio::main]
 async fn main() {
@@ -252,7 +110,7 @@ async fn main() {
                     return
                 }
                 *threads_running_.lock().unwrap() += 1;
-                get_more_element(x.clone(), idx, more_start, last_line_length, elements,cli.max_comments).await;
+                Element::get_more_element(x.clone(), idx, more_start, last_line_length, elements,cli.max_comments).await;
                 *threads_running_.lock().unwrap() -= 1;
             });
             threads.push(t);
