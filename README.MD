@@ -42,6 +42,8 @@ It will go through many changes in the future!
   - [x] sorting 
   - [ ] filtering 
 - [ ] Add more cli verbosity options
+- [ ] Add an option to request 'more' elements or not
+- [ ] Perform more tests
 
 
 ## Contributing

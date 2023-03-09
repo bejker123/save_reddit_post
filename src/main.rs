@@ -133,11 +133,17 @@ async fn main() {
         panic!("Error, returned 0 elements!");
     }
 
-    //Sort elements (except the first one which is the parent element or the reddit post)
     let mut elements = elements.lock().unwrap().clone();
-    let mut elements_cp = Vec::from([elements.get(0).unwrap().clone()]);
-    elements_cp.append(&mut sort_elements(elements[1..elements.len()-1].to_vec(), cli.sort_style).unwrap());
-    elements = elements_cp;
+
+    //Sort elements (except the first one which is the parent element or the reddit post)
+    if elements.len() > 1{
+        let mut elements_cp = Vec::from([match elements.get(0){
+            Some(o)=>o.clone(),
+            None=>panic!("Error, invalid elements!")
+        }]);
+        elements_cp.append(&mut sort_elements(elements[1..elements.len()-1].to_vec(), cli.sort_style).unwrap_or(Vec::new()));
+        elements = elements_cp;
+    }
 
     //Set the default output to stdout
     let mut output: Box<dyn Write> = Box::new(std::io::stdout());

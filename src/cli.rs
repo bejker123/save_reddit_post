@@ -190,6 +190,11 @@ impl CLI {
     }
 
     pub fn parse_url(mut url: String) -> (String, String) {
+
+        if !url.contains("reddit.com/"){
+            panic!("Invalid url: {}",url);
+        }
+
         url = url.replace('\'', "");
         url = url.replace(' ', "");
         url = url.replace('\n', "");
@@ -201,11 +206,14 @@ impl CLI {
             _ => url,
         };
 
-        let search_for = "://";
+        let search_for = "https://";
 
         let start_idx = match url.find(search_for) {
             Some(o) => o + search_for.len(),
-            _ => 0,
+            _ => {
+                    url = search_for.to_owned() + &url;
+                    search_for.len()-1
+            },
         };
 
         url = match url[start_idx..].rfind(':') {
@@ -214,6 +222,11 @@ impl CLI {
         };
 
         let mut base_url = url.clone();
+
+        //If url doens't contain at least 3 / it's assumed to be invalid
+        if url.matches('/').count() < 3{
+            panic!("Invalid url: {}",url)
+        }
 
         if url.ends_with('/') {
             url = url[0..url.len() - 1].to_string();
