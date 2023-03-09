@@ -20,7 +20,7 @@ impl CLI {
         println!(" -s/--save specify save path(output.tmp by default)");
         println!(" -o/--output don't save to file just output to stdout");
         println!(" -f/--format set the format (not case sensitive)");
-        println!(" -m/--max set the max amount comments to get");
+        println!(" -m/--max set the max amount comments to get (min 2, to get the actual post)");
         println!(" Valid formats:");
         println!("{}Default/d", " ".repeat(15));
         println!("{}HTML/h", " ".repeat(15));
@@ -107,7 +107,7 @@ impl CLI {
                         skip_count += 1;
                         let max_comments_ = args[i + 1].clone();
                         match max_comments_.parse::<usize>(){
-                            Ok(o)=>max_comments = o,
+                            Ok(o)=>max_comments = std::cmp::max(o,2),
                             Err(_)=>{
                                 println!("Invalid format: {}", args[i + 1]);
                                 Self::help(true);
