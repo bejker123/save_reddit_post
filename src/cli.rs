@@ -161,7 +161,7 @@ impl CLI {
                             "edited-asc" => sort_style = ElementSort::EditedDate(true), 
                             //for adding more: "tmp"=>sort_style = ElementSort::tmp, 
                             _ => {
-                                println!("Invalid format: {}", args[i + 1]);
+                                println!("Invalid sort option: {}", args[i + 1]);
                                 Self::help(true);
                             }
                         }
