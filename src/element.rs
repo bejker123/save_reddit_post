@@ -50,11 +50,12 @@ pub struct Element {
     url: String, //url_overridden_by_dest
     pub ups: usize,
     pub children: Vec<Element>,
-    edited: bool,
     depth: String,
     permalink: String,
     id: String,
     over_18: bool,
+    pub created : usize,
+    pub edited : usize,
 }
 
 impl PartialEq for Element {
@@ -238,11 +239,19 @@ impl Element {
                 url: get_data_wrapper!(data, url_overridden_by_dest, String::new()),
                 //a hacky way, but "kind" attribute is higher in the json tree so it would be a pain in the butt to get it that way
                 kind: get_data_wrapper!(data, name, String::new())[0..2].to_owned(),
-                edited: get_data_wrapper!(data, edited, String::from("false")) == *"true",
+                //edited: get_data_wrapper!(data, edited, String::from("false")) == *"true",
                 depth: get_data_wrapper!(data, depth, "0".to_string()),
                 permalink: get_data_wrapper!(data, permalink, String::new()),
                 id: get_data_wrapper!(data, id, String::new()),
                 over_18: get_data_wrapper!(data, over_18, String::from("false")) == *"true",
+                created: match get_data_wrapper!(data, created, usize::MAX.to_string()).parse::<f32>() {
+                    Ok(o) => o as usize,
+                    _ => usize::MAX,
+                },
+                edited: match get_data_wrapper!(data, edited, usize::MAX.to_string()).parse::<f32>() {
+                    Ok(o) => o as usize,
+                    _ => usize::MAX,
+                },
             },
         )
     }

@@ -1,7 +1,7 @@
 extern crate tokio;
 use async_recursion::async_recursion;
 
-use crate::{element::{Element, self}, cli::ElementSort};
+use crate::{element::{Element}, cli::ElementSort};
 
 use rand::prelude::*;
 
@@ -58,16 +58,16 @@ pub fn sort_elements(mut elements : Vec<Element>,sort_style : ElementSort) -> Re
             elements.sort_by(|a,b| a.children.len().cmp(&b.children.len()))
         }
         ElementSort::Date(false) => {
-            todo!()
+            elements.sort_by(|a,b| b.created.cmp(&a.created))
         }
         ElementSort::Date(true) => {
-            todo!()
+            elements.sort_by(|a,b| a.created.cmp(&b.created))
         }
-        ElementSort::ModifiedDate(false) => {
-            todo!()
+        ElementSort::EditedDate(false) => {
+            elements.sort_by(|a,b| b.edited.cmp(&a.edited))
         }
-        ElementSort::ModifiedDate(true) => {
-            todo!()
+        ElementSort::EditedDate(true) => {
+            elements.sort_by(|a,b| a.edited.cmp(&b.edited))
         }
         ElementSort::Default =>{}
     }

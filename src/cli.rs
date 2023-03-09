@@ -19,7 +19,7 @@ pub enum ElementSort{
     Upvotes(bool), //Ascending or not
     Comments(bool), //Ascending or not
     Date(bool), //Ascending or not
-    ModifiedDate(bool), //Ascending or not
+    EditedDate(bool), //Ascending or not
     
 }
 
@@ -44,8 +44,8 @@ impl CLI {
         println!("{}comments-asc", padding);
         println!("{}new", padding);
         println!("{}old", padding);
-        println!("{}modified", padding);
-        println!("{}modified-asc", padding);
+        println!("{}edited", padding);
+        println!("{}edited-asc", padding);
         let ll = " Valid formats:";
         let padding = " ".repeat(ll.len());
         println!("{}",ll);
@@ -157,8 +157,8 @@ impl CLI {
                             "comments-asc"=>sort_style = ElementSort::Comments(true),
                             "new"=>sort_style = ElementSort::Date(false),
                             "old"=>sort_style = ElementSort::Date(true),
-                            "modified"=>sort_style = ElementSort::ModifiedDate(false), 
-                            "modified-asc"=>sort_style = ElementSort::ModifiedDate(true), 
+                            "edited"=>sort_style = ElementSort::EditedDate(false), 
+                            "edited-asc"=>sort_style = ElementSort::EditedDate(true), 
                             //for adding more: "tmp"=>sort_style = ElementSort::tmp, 
                             _=>{
                                 println!("Invalid format: {}", args[i + 1]);
