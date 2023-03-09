@@ -72,7 +72,7 @@ async fn main() {
 
     let start = std::time::SystemTime::now();
 
-    let elements = Element::init(&json_data,cli.max_comments);
+    let elements = Element::init(&json_data, cli.max_comments);
 
     if !elements.is_empty() {
         println!("success.");
@@ -90,7 +90,7 @@ async fn main() {
     let elements = Arc::new(Mutex::new(elements));
 
     //'more' elements
-    if get_safe!(MORE_ELEMENTS_COUNT) > 0  && get_safe!(ELEMENTS_COUNT) < cli.max_comments{
+    if get_safe!(MORE_ELEMENTS_COUNT) > 0 && get_safe!(ELEMENTS_COUNT) < cli.max_comments {
         println!("Getting 'more' elements:");
 
         let mut threads: Vec<tokio::task::JoinHandle<_>> = Vec::new();
@@ -106,11 +106,19 @@ async fn main() {
                 Arc::clone(&threads_running),
             );
             let t = tokio::spawn(async move {
-                if get_safe!(ELEMENTS_COUNT) >= cli.max_comments{
-                    return
+                if get_safe!(ELEMENTS_COUNT) >= cli.max_comments {
+                    return;
                 }
                 *threads_running_.lock().unwrap() += 1;
-                Element::get_more_element(x.clone(), idx, more_start, last_line_length, elements,cli.max_comments).await;
+                Element::get_more_element(
+                    x.clone(),
+                    idx,
+                    more_start,
+                    last_line_length,
+                    elements,
+                    cli.max_comments,
+                )
+                .await;
                 *threads_running_.lock().unwrap() -= 1;
             });
             threads.push(t);
@@ -135,12 +143,15 @@ async fn main() {
     let mut elements = elements.lock().unwrap().clone();
 
     //Sort elements (except the first one which is the parent element or the reddit post)
-    if elements.len() > 1{
-        let mut elements_cp = Vec::from([match elements.get(0){
-            Some(o)=>o.clone(),
-            None=>panic!("Error, invalid elements!")
+    if elements.len() > 1 {
+        let mut elements_cp = Vec::from([match elements.get(0) {
+            Some(o) => o.clone(),
+            None => panic!("Error, invalid elements!"),
         }]);
-        elements_cp.append(&mut sort_elements(elements[1..elements.len()-1].to_vec(), cli.sort_style).unwrap_or(Vec::new()));
+        elements_cp.append(
+            &mut sort_elements(elements[1..elements.len() - 1].to_vec(), cli.sort_style)
+                .unwrap_or(Vec::new()),
+        );
         elements = elements_cp;
     }
 

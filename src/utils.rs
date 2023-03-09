@@ -1,7 +1,7 @@
 extern crate tokio;
 use async_recursion::async_recursion;
 
-use crate::{element::{Element}, cli::ElementSort};
+use crate::{cli::ElementSort, element::Element};
 
 use rand::prelude::*;
 
@@ -35,46 +35,39 @@ pub fn convert_time(t: f64) -> String {
     }
 }
 
-pub fn sort_elements(mut elements : Vec<Element>,sort_style : ElementSort) -> Result<Vec<Element>,String>{
-    if elements.is_empty(){
-        return Err(String::from("elements empty"))
+pub fn sort_elements(
+    mut elements: Vec<Element>,
+    sort_style: ElementSort,
+) -> Result<Vec<Element>, String> {
+    if elements.is_empty() {
+        return Err(String::from("elements empty"));
     }
 
-    match sort_style{
+    match sort_style {
         ElementSort::Rand => {
             let mut rng = rand::thread_rng();
             elements.shuffle(&mut rng);
         }
-        ElementSort::Upvotes(false) => {
-            elements.sort_by(|a,b| b.ups.cmp(&a.ups))
-        }
-        ElementSort::Upvotes(true) => {
-            elements.sort_by(|a,b| a.ups.cmp(&b.ups))
-        }
+        ElementSort::Upvotes(false) => elements.sort_by(|a, b| b.ups.cmp(&a.ups)),
+        ElementSort::Upvotes(true) => elements.sort_by(|a, b| a.ups.cmp(&b.ups)),
         ElementSort::Comments(false) => {
-            elements.sort_by(|a,b| b.children.len().cmp(&a.children.len()))
+            elements.sort_by(|a, b| b.children.len().cmp(&a.children.len()))
         }
         ElementSort::Comments(true) => {
-            elements.sort_by(|a,b| a.children.len().cmp(&b.children.len()))
+            elements.sort_by(|a, b| a.children.len().cmp(&b.children.len()))
         }
-        ElementSort::Date(false) => {
-            elements.sort_by(|a,b| b.created.cmp(&a.created))
-        }
-        ElementSort::Date(true) => {
-            elements.sort_by(|a,b| a.created.cmp(&b.created))
-        }
-        ElementSort::EditedDate(false) => {
-            elements.sort_by(|a,b| b.edited.cmp(&a.edited))
-        }
-        ElementSort::EditedDate(true) => {
-            elements.sort_by(|a,b| a.edited.cmp(&b.edited))
-        }
-        ElementSort::Default =>{}
+        ElementSort::Date(false) => elements.sort_by(|a, b| b.created.cmp(&a.created)),
+        ElementSort::Date(true) => elements.sort_by(|a, b| a.created.cmp(&b.created)),
+        ElementSort::EditedDate(false) => elements.sort_by(|a, b| b.edited.cmp(&a.edited)),
+        ElementSort::EditedDate(true) => elements.sort_by(|a, b| a.edited.cmp(&b.edited)),
+        ElementSort::Default => {}
     }
 
-    for element in &mut elements{
+    for element in &mut elements {
         //sort children recursively
-        element.children = sort_elements(element.children.clone(),sort_style.clone()).unwrap_or(Vec::new()).to_vec();
+        element.children = sort_elements(element.children.clone(), sort_style.clone())
+            .unwrap_or(Vec::new())
+            .to_vec();
     }
 
     Ok(elements)

@@ -9,8 +9,8 @@ fn st(x: &str) -> String {
     x.to_string()
 }
 
-const USIZE_MAX : usize = usize::MAX;
-const CLI_ELEMENT_SORT_DEF : CLI::ElementSort = cli::CLI::ElementSort::Default;
+const USIZE_MAX: usize = usize::MAX;
+const CLI_ELEMENT_SORT_DEF: CLI::ElementSort = cli::CLI::ElementSort::Default;
 
 //TODO: add more
 #[test]
@@ -20,7 +20,7 @@ fn test_element() {
 
     let json_data = json::parse(&data).unwrap();
 
-    let elements = crate::element::Element::init(&json_data,USIZE_MAX);
+    let elements = crate::element::Element::init(&json_data, USIZE_MAX);
     let mut output = std::fs::OpenOptions::new()
         .create(true)
         .write(true)
@@ -67,7 +67,6 @@ fn test_cli() {
             save_to_file: true,
             save_path: st("test-path.txt"),
             max_comments: USIZE_MAX,
-            
         }
     );
     assert_eq!(

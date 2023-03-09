@@ -8,19 +8,18 @@ pub struct CLI {
     pub base_url: String,
     pub save_to_file: bool,
     pub save_path: String,
-    pub max_comments : usize,
+    pub max_comments: usize,
     pub sort_style: ElementSort,
 }
 
-#[derive(Eq,PartialEq,Debug,Clone)]
-pub enum ElementSort{
+#[derive(Eq, PartialEq, Debug, Clone)]
+pub enum ElementSort {
     Default,
     Rand,
-    Upvotes(bool), //Ascending or not
-    Comments(bool), //Ascending or not
-    Date(bool), //Ascending or not
+    Upvotes(bool),    //Ascending or not
+    Comments(bool),   //Ascending or not
+    Date(bool),       //Ascending or not
     EditedDate(bool), //Ascending or not
-    
 }
 
 impl CLI {
@@ -35,7 +34,7 @@ impl CLI {
         println!(" -m/--max set the max amount comments to get (min 2, to get the actual post)");
         let ll = " --sort choose sort option form:";
         let padding = " ".repeat(ll.len());
-        println!("{}",ll);
+        println!("{}", ll);
         println!("{}default", padding);
         println!("{}rand/random", padding);
         println!("{}upvotes/ups", padding);
@@ -48,7 +47,7 @@ impl CLI {
         println!("{}edited-asc", padding);
         let ll = " Valid formats:";
         let padding = " ".repeat(ll.len());
-        println!("{}",ll);
+        println!("{}", ll);
         println!("{}Default/d", padding);
         println!("{}HTML/h", padding);
 
@@ -134,9 +133,9 @@ impl CLI {
                         }
                         skip_count += 1;
                         let max_comments_ = args[i + 1].clone();
-                        match max_comments_.parse::<usize>(){
-                            Ok(o)=>max_comments = std::cmp::max(o,2),
-                            Err(_)=>{
+                        match max_comments_.parse::<usize>() {
+                            Ok(o) => max_comments = std::cmp::max(o, 2),
+                            Err(_) => {
                                 println!("Invalid format: {}", args[i + 1]);
                                 Self::help(true);
                             }
@@ -148,8 +147,8 @@ impl CLI {
                         }
                         skip_count += 1;
                         let sort_style_ = args[i + 1].clone().trim().to_lowercase();
-                        match sort_style_.as_str(){
-                            "default"=>{},
+                        match sort_style_.as_str() {
+                            "default" => {}
                             "rand" | "random" => sort_style = ElementSort::Rand,
                             "upvotes" | "ups" => sort_style = ElementSort::Upvotes(false),
                             "upvotes-asc" | "ups-asc" => sort_style = ElementSort::Upvotes(true),
@@ -157,9 +156,9 @@ impl CLI {
                             "comments-asc" => sort_style = ElementSort::Comments(true),
                             "new" => sort_style = ElementSort::Date(false),
                             "old" => sort_style = ElementSort::Date(true),
-                            "edited" => sort_style = ElementSort::EditedDate(false), 
-                            "edited-asc" => sort_style = ElementSort::EditedDate(true), 
-                            //for adding more: "tmp"=>sort_style = ElementSort::tmp, 
+                            "edited" => sort_style = ElementSort::EditedDate(false),
+                            "edited-asc" => sort_style = ElementSort::EditedDate(true),
+                            //for adding more: "tmp"=>sort_style = ElementSort::tmp,
                             _ => {
                                 println!("Invalid sort option: {}", args[i + 1]);
                                 Self::help(true);
@@ -184,14 +183,13 @@ impl CLI {
             save_to_file,
             save_path,
             max_comments,
-            sort_style
+            sort_style,
         }
     }
 
     pub fn parse_url(mut url: String) -> (String, String) {
-
-        if !url.contains("reddit.com/"){
-            panic!("Invalid url: {}",url);
+        if !url.contains("reddit.com/") {
+            panic!("Invalid url: {}", url);
         }
 
         url = url.replace('\'', "");
@@ -210,9 +208,9 @@ impl CLI {
         let start_idx = match url.find(search_for) {
             Some(o) => o + search_for.len(),
             _ => {
-                    url = search_for.to_owned() + &url;
-                    search_for.len()-1
-            },
+                url = search_for.to_owned() + &url;
+                search_for.len() - 1
+            }
         };
 
         url = match url[start_idx..].rfind(':') {
@@ -223,8 +221,8 @@ impl CLI {
         let mut base_url = url.clone();
 
         //If url doens't contain at least 3 / it's assumed to be invalid
-        if url.matches('/').count() < 3{
-            panic!("Invalid url: {}",url)
+        if url.matches('/').count() < 3 {
+            panic!("Invalid url: {}", url)
         }
 
         if url.ends_with('/') {

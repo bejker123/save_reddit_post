@@ -1,11 +1,16 @@
 extern crate json;
 extern crate reqwest;
 
-use std::{str::FromStr, sync::{Arc, Mutex}, time::SystemTime, thread};
+use std::{
+    str::FromStr,
+    sync::{Arc, Mutex},
+    thread,
+    time::SystemTime,
+};
 
 use json::JsonValue;
 
-use crate::{request, convert_time};
+use crate::{convert_time, request};
 use std::io::Write;
 
 #[derive(Debug)]
@@ -54,8 +59,8 @@ pub struct Element {
     permalink: String,
     id: String,
     over_18: bool,
-    pub created : usize,
-    pub edited : usize,
+    pub created: usize,
+    pub edited: usize,
 }
 
 impl PartialEq for Element {
@@ -154,13 +159,13 @@ impl std::fmt::Debug for Element {
 }
 
 impl Element {
-    pub fn create(child: &JsonValue, max_elements: usize ) -> Result<Element, Empty> {
-        if get_safe!(ELEMENTS_COUNT) >= max_elements{
-            return Err(Empty {})
+    pub fn create(child: &JsonValue, max_elements: usize) -> Result<Element, Empty> {
+        if get_safe!(ELEMENTS_COUNT) >= max_elements {
+            return Err(Empty {});
         }
         let data = &child["data"];
         if *data == JsonValue::Null {
-            return Err(Empty {})
+            return Err(Empty {});
         }
         //If the element lists more elements(it's kind is more)
         if child["kind"].clone() == "more" {
@@ -227,7 +232,7 @@ impl Element {
             Element {
                 author: author,
                 data: total_data,
-                children: match Element::get_replies(data,max_elements) {
+                children: match Element::get_replies(data, max_elements) {
                     Ok(o) => o,
                     _ => Vec::new(),
                 },
@@ -244,11 +249,14 @@ impl Element {
                 permalink: get_data_wrapper!(data, permalink, String::new()),
                 id: get_data_wrapper!(data, id, String::new()),
                 over_18: get_data_wrapper!(data, over_18, String::from("false")) == *"true",
-                created: match get_data_wrapper!(data, created, usize::MAX.to_string()).parse::<f32>() {
+                created: match get_data_wrapper!(data, created, usize::MAX.to_string())
+                    .parse::<f32>()
+                {
                     Ok(o) => o as usize,
                     _ => usize::MAX,
                 },
-                edited: match get_data_wrapper!(data, edited, usize::MAX.to_string()).parse::<f32>() {
+                edited: match get_data_wrapper!(data, edited, usize::MAX.to_string()).parse::<f32>()
+                {
                     Ok(o) => o as usize,
                     _ => usize::MAX,
                 },
@@ -256,16 +264,16 @@ impl Element {
         )
     }
 
-    pub fn init(data: &JsonValue,max_elements: usize) -> Vec<Element> {
+    pub fn init(data: &JsonValue, max_elements: usize) -> Vec<Element> {
         let mut elements = Vec::<Element>::new();
 
         for member in data.members() {
             for child in member["data"]["children"].members() {
-                if get_safe!(ELEMENTS_COUNT) >= max_elements{
-                    break
+                if get_safe!(ELEMENTS_COUNT) >= max_elements {
+                    break;
                 }
                 //.If created element isn't empty (Ok) push it.
-                if let Ok(o) = Element::create(child,max_elements) {
+                if let Ok(o) = Element::create(child, max_elements) {
                     elements.push(o)
                 }
             }
@@ -273,14 +281,14 @@ impl Element {
         elements
     }
 
-    fn get_replies(element: &JsonValue,max_elements: usize) -> Result<Vec<Element>, Empty> {
+    fn get_replies(element: &JsonValue, max_elements: usize) -> Result<Vec<Element>, Empty> {
         let mut out = Vec::<Element>::new();
         if element["replies"] != JsonValue::Null {
             for child in element["replies"]["data"]["children"].members() {
-                if get_safe!(ELEMENTS_COUNT) >= max_elements{
-                    break
+                if get_safe!(ELEMENTS_COUNT) >= max_elements {
+                    break;
                 }
-                let element = match Element::create(child,max_elements) {
+                let element = match Element::create(child, max_elements) {
                     Ok(o) => o,
                     _ => continue,
                 };
@@ -307,41 +315,41 @@ impl Element {
         more_start: SystemTime,
         last_line_length: Arc<Mutex<usize>>,
         elements: Arc<Mutex<Vec<Element>>>,
-        max_comments : usize
+        max_comments: usize,
     ) {
-        if get_safe!(ELEMENTS_COUNT) >= max_comments{
-            return
+        if get_safe!(ELEMENTS_COUNT) >= max_comments {
+            return;
         }
         //build the url
         let url = base_url;
         let res = request(url, None).await;
-    
+
         let data = match res.text().await {
             Ok(o) => o,
             _ => todo!(), //TODO: add restarting
         };
-    
+
         let json_data = json::parse(&data).unwrap();
-    
+
         //Parse json data to elements
-        let mut e = Element::init(&json_data,max_comments);
-    
+        let mut e = Element::init(&json_data, max_comments);
+
         {
             let idx_ = *idx.lock().unwrap();
             let last_line_length_ = *last_line_length.lock().unwrap();
-    
+
             //calculate % of progress as a 64bit float 64
             let precent = idx_ / (get_safe!(MORE_ELEMENTS).len() as f64) * 100f64;
-    
+
             //get time passed since start of getting 'more' elements
             let passed = std::time::SystemTime::now()
                 .duration_since(more_start)
                 .unwrap()
                 .as_millis();
-    
+
             //Get estimated time
             let eta = get_safe!(MORE_ELEMENTS).len() as f64 / (idx_ / passed as f64);
-    
+
             //Format the line to be printed
             let mut line = format!(
                 "{idx_} / {} {:.2}% runtime: {} ETA: {}",
@@ -350,16 +358,16 @@ impl Element {
                 convert_time(passed as f64 / 1000f64),
                 convert_time((eta - passed as f64) / 1000f64)
             );
-    
+
             let line_length = line.len();
-    
+
             //Make sure there is no residual chars from last line
             if line_length < last_line_length_ {
                 line += &" ".repeat(last_line_length_ - line_length);
             }
             let mut last_line_length_ = last_line_length.lock().unwrap();
             *last_line_length_ = line_length;
-    
+
             //Print the line and flush stdout
             //If you don;t flush stdout not every line will be printed,
             //Because print! doesn't flush as oppose to println!
@@ -368,27 +376,27 @@ impl Element {
             let mut idx_ = idx.lock().unwrap();
             *idx_ += 1.0;
         }
-    
+
         //
         {
-            let mut elements_ = match elements.lock(){
-                Ok(o)=>o,
-                Err(e)=>{
-                    println!("{:?} panic:\n{}",thread::current(),e);
+            let mut elements_ = match elements.lock() {
+                Ok(o) => o,
+                Err(e) => {
+                    println!("{:?} panic:\n{}", thread::current(), e);
                     return;
                 }
             };
             //This is intended
             #[allow(clippy::collapsible_if)]
             if e.len() < 2 {
-                if !e.is_empty(){
-                    if !e[0].children.is_empty(){
+                if !e.is_empty() {
+                    if !e[0].children.is_empty() {
                         elements_.append(&mut e[0].children);
                     }
                 }
                 return;
             }
-    
+
             //Recursively check every element, and if the first element matches appedn to it
             fn app(x: &mut Vec<Element>, y: &mut Vec<Element>) {
                 for element in &mut *y {
@@ -408,10 +416,8 @@ impl Element {
                     app(x, &mut e.children);
                 }
             }
-    
+
             app(&mut e, &mut elements_);
         }
     }
-    
-
 }
