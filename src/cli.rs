@@ -8,6 +8,7 @@ pub struct CLI {
     pub base_url: String,
     pub save_to_file: bool,
     pub save_path: String,
+    pub max_comments : usize,
 }
 
 impl CLI {
@@ -19,6 +20,7 @@ impl CLI {
         println!(" -s/--save specify save path(output.tmp by default)");
         println!(" -o/--output don't save to file just output to stdout");
         println!(" -f/--format set the format (not case sensitive)");
+        println!(" -m/--max set the max amount comments to get");
         println!(" Valid formats:");
         println!("{}Default/d", " ".repeat(15));
         println!("{}HTML/h", " ".repeat(15));
@@ -35,6 +37,7 @@ impl CLI {
         let mut url = String::new();
         let mut save_to_file = true;
         let mut save_path = String::from("output.txt");
+        let mut max_comments = usize::MAX;
 
         if args.len() == 1 {
             Self::help(true);
@@ -97,6 +100,20 @@ impl CLI {
                             }
                         }
                     }
+                    "-m" | "--max" => {
+                        if args.len() < i + 1 {
+                            Self::help(true);
+                        }
+                        skip_count += 1;
+                        let max_comments_ = args[i + 1].clone();
+                        match max_comments_.parse::<usize>(){
+                            Ok(o)=>max_comments = o,
+                            Err(_)=>{
+                                println!("Invalid format: {}", args[i + 1]);
+                                Self::help(true);
+                            }
+                        }
+                    }
                     _ => {
                         println!("Invalid argument: {}", args[i])
                     }
@@ -115,6 +132,7 @@ impl CLI {
             base_url,
             save_to_file,
             save_path,
+            max_comments
         }
     }
 

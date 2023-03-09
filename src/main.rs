@@ -13,7 +13,7 @@ use output_writer::*;
 mod tests;
 
 use async_recursion::async_recursion;
-use std::{io::Write, process::exit, sync::Arc, sync::Mutex, time::SystemTime};
+use std::{io::Write, process::exit, sync::Arc, sync::Mutex, time::SystemTime, thread};
 
 #[async_recursion]
 async fn request(url: String, retries: Option<usize>) -> reqwest::Response {
@@ -45,13 +45,18 @@ fn convert_time(t: f64) -> String {
     }
 }
 
+//TODO: move this to element.rs
 async fn get_more_element(
     base_url: String,
     idx: Arc<Mutex<f64>>,
     more_start: SystemTime,
     last_line_length: Arc<Mutex<usize>>,
     elements: Arc<Mutex<Vec<Element>>>,
+    max_comments : usize
 ) {
+    if get_safe!(ELEMENTS_COUNT) >= max_comments{
+        return
+    }
     //build the url
     let url = base_url;
     let res = request(url, None).await;
@@ -64,14 +69,14 @@ async fn get_more_element(
     let json_data = json::parse(&data).unwrap();
 
     //Parse json data to elements
-    let mut e = Element::init(&json_data);
+    let mut e = Element::init(&json_data,max_comments);
 
     {
         let idx_ = *idx.lock().unwrap();
         let last_line_length_ = *last_line_length.lock().unwrap();
 
         //calculate % of progress as a 64bit float 64
-        let precent = idx_ / (get_safe!(MORE_ELEMENTS).len() as f64) * 100f64;
+        let precent = idx_ / (std::cmp::min(get_safe!(MORE_ELEMENTS_COUNT),max_comments) as f64) * 100f64;
 
         //get time passed since start of getting 'more' elements
         let passed = std::time::SystemTime::now()
@@ -80,12 +85,12 @@ async fn get_more_element(
             .as_millis();
 
         //Get estimated time
-        let eta = get_safe!(MORE_ELEMENTS).len() as f64 / (idx_ / passed as f64);
+        let eta = std::cmp::min(get_safe!(MORE_ELEMENTS_COUNT),max_comments) as f64 / (idx_ / passed as f64);
 
         //Format the line to be printed
         let mut line = format!(
             "{idx_} / {} {:.2}% runtime: {} ETA: {}",
-            get_safe!(MORE_ELEMENTS).len(),
+            std::cmp::min(get_safe!(MORE_ELEMENTS_COUNT),max_comments),
             precent,
             convert_time(passed as f64 / 1000f64),
             convert_time((eta - passed as f64) / 1000f64)
@@ -111,9 +116,19 @@ async fn get_more_element(
 
     //
     {
-        let mut elements_ = elements.lock().unwrap();
+        let mut elements_ = match elements.lock(){
+            Ok(o)=>o,
+            Err(e)=>{
+                println!("{:?} panic:\n{}",thread::current(),e);
+                return;
+            }
+        };
         if e.len() < 2 {
-            elements_.append(&mut e[0].children);
+            if e.len() > 0{
+                if e[0].children.len() > 0{
+                    elements_.append(&mut e[0].children);
+                }
+            }
             return;
         }
 
@@ -199,7 +214,7 @@ async fn main() {
 
     let start = std::time::SystemTime::now();
 
-    let elements = Element::init(&json_data);
+    let elements = Element::init(&json_data,cli.max_comments);
 
     if !elements.is_empty() {
         println!("success.");
@@ -217,7 +232,7 @@ async fn main() {
     let elements = Arc::new(Mutex::new(elements));
 
     //'more' elements
-    if get_safe!(MORE_ELEMENTS_COUNT) > 0 {
+    if get_safe!(MORE_ELEMENTS_COUNT) > 0  && get_safe!(ELEMENTS_COUNT) < cli.max_comments{
         println!("Getting 'more' elements:");
 
         let mut threads: Vec<tokio::task::JoinHandle<_>> = Vec::new();
@@ -233,8 +248,11 @@ async fn main() {
                 Arc::clone(&threads_running),
             );
             let t = tokio::spawn(async move {
+                if get_safe!(ELEMENTS_COUNT) >= cli.max_comments{
+                    return
+                }
                 *threads_running_.lock().unwrap() += 1;
-                get_more_element(x.clone(), idx, more_start, last_line_length, elements).await;
+                get_more_element(x.clone(), idx, more_start, last_line_length, elements,cli.max_comments).await;
                 *threads_running_.lock().unwrap() -= 1;
             });
             threads.push(t);
@@ -247,12 +265,13 @@ async fn main() {
             if *threads_running.lock().unwrap() == 0 {
                 break;
             }
+            //println!("{}",*threads_running.lock().unwrap());
             std::thread::sleep(std::time::Duration::from_millis(100));
         }
         println!();
     }
 
-    if get_safe!(ELEMENTS_COUNT) == 1 {
+    if get_safe!(ELEMENTS_COUNT) == 0 {
         panic!("Error, returned 0 elements!");
     }
 
@@ -323,7 +342,7 @@ async fn main() {
         if !get_safe!(MORE_ELEMENTS).is_empty() {
             get_safe!(ELEMENTS_COUNT)
         } else {
-            get_safe!(ELEMENTS_COUNT) + 2
+            get_safe!(ELEMENTS_COUNT)
         },
         if get_safe!(ELEMENTS_COUNT) == 1 {
             ""

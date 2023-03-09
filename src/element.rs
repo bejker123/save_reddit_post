@@ -150,10 +150,13 @@ impl std::fmt::Debug for Element {
 }
 
 impl Element {
-    pub fn create(child: &JsonValue) -> Result<Element, Empty> {
+    pub fn create(child: &JsonValue, max_elements: usize ) -> Result<Element, Empty> {
+        if get_safe!(ELEMENTS_COUNT) >= max_elements{
+            return Err(Empty {})
+        }
         let data = &child["data"];
         if *data == JsonValue::Null {
-            return Err(Empty {});
+            return Err(Empty {})
         }
         //If the element lists more elements(it's kind is more)
         if child["kind"].clone() == "more" {
@@ -220,7 +223,7 @@ impl Element {
             Element {
                 author: author,
                 data: total_data,
-                children: match Element::get_replies(data) {
+                children: match Element::get_replies(data,max_elements) {
                     Ok(o) => o,
                     _ => Vec::new(),
                 },
@@ -241,13 +244,16 @@ impl Element {
         )
     }
 
-    pub fn init(data: &JsonValue) -> Vec<Element> {
+    pub fn init(data: &JsonValue,max_elements: usize) -> Vec<Element> {
         let mut elements = Vec::<Element>::new();
 
         for member in data.members() {
             for child in member["data"]["children"].members() {
+                if get_safe!(ELEMENTS_COUNT) >= max_elements{
+                    break
+                }
                 //.If created element isn't empty (Ok) push it.
-                if let Ok(o) = Element::create(child) {
+                if let Ok(o) = Element::create(child,max_elements) {
                     elements.push(o)
                 }
             }
@@ -255,11 +261,14 @@ impl Element {
         elements
     }
 
-    fn get_replies(element: &JsonValue) -> Result<Vec<Element>, Empty> {
+    fn get_replies(element: &JsonValue,max_elements: usize) -> Result<Vec<Element>, Empty> {
         let mut out = Vec::<Element>::new();
         if element["replies"] != JsonValue::Null {
             for child in element["replies"]["data"]["children"].members() {
-                let element = match Element::create(child) {
+                if get_safe!(ELEMENTS_COUNT) >= max_elements{
+                    break
+                }
+                let element = match Element::create(child,max_elements) {
                     Ok(o) => o,
                     _ => continue,
                 };

@@ -9,6 +9,8 @@ fn st(x: &str) -> String {
     x.to_string()
 }
 
+const USIZE_MAX : usize = usize::MAX;
+
 //TODO: add more
 #[test]
 fn test_element() {
@@ -17,7 +19,7 @@ fn test_element() {
 
     let json_data = json::parse(&data).unwrap();
 
-    let elements = crate::element::Element::init(&json_data);
+    let elements = crate::element::Element::init(&json_data,USIZE_MAX);
     let mut output = std::fs::OpenOptions::new()
         .create(true)
         .write(true)
@@ -62,7 +64,8 @@ fn test_cli() {
             url: st("https://test-url.com.json"),
             base_url: st("https://test-url.com/"),
             save_to_file: true,
-            save_path: st("test-path.txt")
+            save_path: st("test-path.txt"),
+            max_comments: USIZE_MAX
         }
     );
     assert_eq!(
@@ -77,7 +80,8 @@ fn test_cli() {
             url: st("https://test-url.com.json"),
             base_url: st("https://test-url.com/"),
             save_to_file: false,
-            save_path: st("test-path.txt")
+            save_path: st("test-path.txt"),
+            max_comments: USIZE_MAX,
         }
     );
     assert_eq!(
@@ -86,7 +90,8 @@ fn test_cli() {
             url: st("https://test-url.com.json"),
             base_url: st("https://test-url.com/"),
             save_to_file: false,
-            save_path: st("output.txt")
+            save_path: st("output.txt"),
+            max_comments: USIZE_MAX
         }
     );
 }
