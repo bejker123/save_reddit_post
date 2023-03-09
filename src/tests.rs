@@ -10,6 +10,7 @@ fn st(x: &str) -> String {
 }
 
 const USIZE_MAX : usize = usize::MAX;
+const CLI_ELEMENT_SORT_DEF : CLI::ElementSort = cli::CLI::ElementSort::Default;
 
 //TODO: add more
 #[test]
@@ -65,7 +66,8 @@ fn test_cli() {
             base_url: st("https://test-url.com/"),
             save_to_file: true,
             save_path: st("test-path.txt"),
-            max_comments: USIZE_MAX
+            max_comments: USIZE_MAX,
+            
         }
     );
     assert_eq!(

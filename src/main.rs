@@ -133,6 +133,12 @@ async fn main() {
         panic!("Error, returned 0 elements!");
     }
 
+    //Sort elements
+    let mut elements = elements.lock().unwrap().clone();
+    let mut elements_cp = Vec::from([elements.get(0).unwrap().clone()]);
+    elements_cp.append(&mut sort_elements(elements[1..elements.len()-1].to_vec(), cli.sort_style).unwrap());
+    elements = elements_cp;
+
     //Set the default output to stdout
     let mut output: Box<dyn Write> = Box::new(std::io::stdout());
 
@@ -171,7 +177,7 @@ async fn main() {
     //Write every element to the output.
     //For formatting see element.rs:
     //                   impl std::fmt::Debug for Element
-    for elem in elements.lock().unwrap().iter() {
+    for elem in elements.iter() {
         ow.content += &format!("{elem:?}")
     }
 
@@ -197,11 +203,7 @@ async fn main() {
     //TODO: fix descrepency!!!
     print!(
         "Successfully got {} element{} NUM_COMMENTS: {}",
-        if !get_safe!(MORE_ELEMENTS).is_empty() {
-            get_safe!(ELEMENTS_COUNT)
-        } else {
-            get_safe!(ELEMENTS_COUNT)
-        },
+        get_safe!(ELEMENTS_COUNT),
         if get_safe!(ELEMENTS_COUNT) == 1 {
             ""
         } else {

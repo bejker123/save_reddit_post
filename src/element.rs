@@ -42,13 +42,13 @@ macro_rules! get_data_wrapper {
 }
 
 //TODO: add better debug formatting
-#[allow(dead_code)]
+#[derive(Clone)]
 pub struct Element {
     author: String,
     data: String,
     kind: String,
     url: String, //url_overridden_by_dest
-    ups: usize,
+    pub ups: usize,
     pub children: Vec<Element>,
     edited: bool,
     depth: String,
@@ -369,9 +369,11 @@ impl Element {
                     return;
                 }
             };
+            //This is intended
+            #[allow(clippy::collapsible_if)]
             if e.len() < 2 {
-                if e.len() > 0{
-                    if e[0].children.len() > 0{
+                if !e.is_empty(){
+                    if !e[0].children.is_empty(){
                         elements_.append(&mut e[0].children);
                     }
                 }

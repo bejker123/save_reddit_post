@@ -9,6 +9,18 @@ pub struct CLI {
     pub save_to_file: bool,
     pub save_path: String,
     pub max_comments : usize,
+    pub sort_style: ElementSort,
+}
+
+#[derive(Eq,PartialEq,Debug,Clone)]
+pub enum ElementSort{
+    Default,
+    Rand,
+    Upvotes(bool), //Ascending or not
+    Comments(bool), //Ascending or not
+    Date(bool), //Ascending or not
+    ModifiedDate(bool), //Ascending or not
+    
 }
 
 impl CLI {
@@ -21,9 +33,24 @@ impl CLI {
         println!(" -o/--output don't save to file just output to stdout");
         println!(" -f/--format set the format (not case sensitive)");
         println!(" -m/--max set the max amount comments to get (min 2, to get the actual post)");
-        println!(" Valid formats:");
-        println!("{}Default/d", " ".repeat(15));
-        println!("{}HTML/h", " ".repeat(15));
+        let ll = " --sort choose sort option form:";
+        let padding = " ".repeat(ll.len());
+        println!("{}",ll);
+        println!("{}default", padding);
+        println!("{}rand", padding);
+        println!("{}upvotes", padding);
+        println!("{}upvotes-asc", padding);
+        println!("{}comments by nr of child comments", padding);
+        println!("{}comments-asc", padding);
+        println!("{}new", padding);
+        println!("{}old", padding);
+        println!("{}modified", padding);
+        println!("{}modified-asc", padding);
+        let ll = " Valid formats:";
+        let padding = " ".repeat(ll.len());
+        println!("{}",ll);
+        println!("{}Default/d", padding);
+        println!("{}HTML/h", padding);
 
         if invalid_usage {
             println!("Invalid usage!");
@@ -38,6 +65,7 @@ impl CLI {
         let mut save_to_file = true;
         let mut save_path = String::from("output.txt");
         let mut max_comments = usize::MAX;
+        let mut sort_style = ElementSort::Default;
 
         if args.len() == 1 {
             Self::help(true);
@@ -114,6 +142,30 @@ impl CLI {
                             }
                         }
                     }
+                    "--sort" => {
+                        if args.len() < i + 1 {
+                            Self::help(true);
+                        }
+                        skip_count += 1;
+                        let sort_style_ = args[i + 1].clone().trim().to_lowercase();
+                        match sort_style_.as_str(){
+                            "default"=>{},
+                            "rand"=>sort_style = ElementSort::Rand,
+                            "upvotes"=>sort_style = ElementSort::Upvotes(false),
+                            "upvotes-asc"=>sort_style = ElementSort::Upvotes(true),
+                            "comments"=>sort_style = ElementSort::Comments(false),
+                            "comments-asc"=>sort_style = ElementSort::Comments(true),
+                            "new"=>sort_style = ElementSort::Date(false),
+                            "old"=>sort_style = ElementSort::Date(true),
+                            "modified"=>sort_style = ElementSort::ModifiedDate(false), 
+                            "modified-asc"=>sort_style = ElementSort::ModifiedDate(true), 
+                            //for adding more: "tmp"=>sort_style = ElementSort::tmp, 
+                            _=>{
+                                println!("Invalid format: {}", args[i + 1]);
+                                Self::help(true);
+                            }
+                        }
+                    }
                     _ => {
                         println!("Invalid argument: {}", args[i])
                     }
@@ -132,7 +184,8 @@ impl CLI {
             base_url,
             save_to_file,
             save_path,
-            max_comments
+            max_comments,
+            sort_style
         }
     }
 
