@@ -279,8 +279,15 @@ async fn main() {
 
     //Write begining of the file:
     match get_safe!(FORMAT) {
-        ElementFormat::Default => ow.content += &format!("# {{indent}} {{ups}} {{author}}: {{contnet}}\n\nSource: {}", cli.base_url),
-        ElementFormat::HTML => ow.content += &include_str!("html_file.html").replace("{title}", &cli.base_url),
+        ElementFormat::Default => {
+            ow.content += &format!(
+                "# {{indent}} {{ups}} {{author}}: {{contnet}}\n\nSource: {}",
+                cli.base_url
+            )
+        }
+        ElementFormat::HTML => {
+            ow.content += &include_str!("html_file.html").replace("{title}", &cli.base_url)
+        }
         ElementFormat::JSON => ow.content += "{\"data\":[",
     }
 
@@ -296,18 +303,17 @@ async fn main() {
         ElementFormat::Default => {}
         ElementFormat::HTML => ow.content += "\t</div>\n</body>\n</html>",
         ElementFormat::JSON => {
-            if let Some(r) = ow.content.clone().strip_suffix(",\n"){
+            if let Some(r) = ow.content.clone().strip_suffix(",\n") {
                 ow.content = r.to_owned();
             }
-            ow.content += "\n]}"}
-        ,
+            ow.content += "\n]}"
+        }
     }
 
-    match ow.write(){
-        Ok(_)=>println!("success"),
-        Err(e)=>panic!("ow.write() error:\n{}",e)
+    match ow.write() {
+        Ok(_) => println!("success"),
+        Err(e) => panic!("ow.write() error:\n{}", e),
     }
-
 
     //Print last bit of debug data
     // println!("MORE_ELEMENTS_COUNT: {MORE_ELEMENTS_COUNT}\nMORE_ELEMENTS.len(): {}\n{}",MORE_ELEMENTS.len(),MORE_ELEMENTS_COUNT == MORE_ELEMENTS.len());
