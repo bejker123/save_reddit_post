@@ -111,6 +111,20 @@ fn test_cli() {
             save_tmp_files: false,
         }
     );
+
+    assert_eq!(
+        CLI::new(&vec![st("test-bin"), st("-o"), st("--save-tmp-files"), st("https://test-url.com/")]),
+        CLI {
+            url: st("https://test-url.com.json"),
+            base_url: st("https://test-url.com/"),
+            save_to_file: false,
+            save_path: st("output.txt"),
+            max_comments: USIZE_MAX,
+            filter: CLI_ELEMENT_FILTER_DEF,
+            sort_style: CLI_ELEMENT_SORT_DEF,
+            save_tmp_files: true,
+        }
+    );
 }
 
 #[test]
