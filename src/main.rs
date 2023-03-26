@@ -51,13 +51,20 @@ async fn main() {
         exit(1);
     };
 
-    print!("Writing to JSON file: ");
     let start = SystemTime::now();
-    match std::fs::write("raw.json.tmp", json_data.pretty(1)) {
-        Ok(_) => {
-            print!("success ");
+
+    if cli.save_tmp_files{
+        let tmp_dir = std::path::Path::new("tmp");
+        if !tmp_dir.exists(){
+            std::fs::create_dir(tmp_dir).unwrap();
         }
-        Err(e) => panic!("fail.\nError: {e}"),
+        print!("Writing to JSON file: ");
+        match std::fs::write("tmp/raw.json", json_data.pretty(1)) {
+            Ok(_) => {
+                print!("success ");
+            }
+            Err(e) => panic!("fail.\nError: {e}"),
+        }
     }
     println!("(in {} ms)", start.elapsed().unwrap().as_millis());
 
@@ -82,6 +89,13 @@ async fn main() {
 
     let elements = Arc::new(Mutex::new(elements));
 
+    let more_elements_dir = std::path::Path::new("tmp/more_elements");
+    if cli.save_tmp_files{
+        if !more_elements_dir.exists(){
+            std::fs::create_dir(more_elements_dir).unwrap();
+        }
+    }
+
     //'more' elements
     if get_safe!(MORE_ELEMENTS_COUNT) > 0 && get_safe!(ELEMENTS_COUNT) < cli.max_comments {
         println!("Getting 'more' elements:");
@@ -98,12 +112,14 @@ async fn main() {
                 Arc::clone(&elements),
                 Arc::clone(&threads_running),
             );
+            let base_url = cli.base_url.clone();
+            let more_elements_dir = more_elements_dir.to_str().unwrap().to_owned();
             let t = tokio::spawn(async move {
                 if get_safe!(ELEMENTS_COUNT) >= cli.max_comments {
                     return;
                 }
                 *threads_running_.lock().unwrap() += 1;
-                Element::get_more_element(
+                if let Some(o) = Element::get_more_element(
                     x.clone(),
                     idx,
                     more_start,
@@ -111,7 +127,13 @@ async fn main() {
                     elements,
                     cli.max_comments,
                 )
-                .await;
+                .await{
+                    if cli.save_tmp_files{
+                        let filename = x.replace(&base_url, "").trim().to_owned();
+                        let mut file = std::fs::File::create(more_elements_dir+"/"+&filename).unwrap();
+                        file.write_fmt(format_args!("{o}")).unwrap();
+                    }
+                }
                 *threads_running_.lock().unwrap() -= 1;
             });
             threads.push(t);

@@ -344,9 +344,9 @@ impl Element {
         last_line_length: Arc<Mutex<usize>>,
         elements: Arc<Mutex<Vec<Element>>>,
         max_comments: usize,
-    ) {
+    ) -> Option<String>{
         if get_safe!(ELEMENTS_COUNT) >= max_comments {
-            return;
+            return None;
         }
         //build the url
         let url = base_url;
@@ -414,7 +414,7 @@ impl Element {
                 Ok(o) => o,
                 Err(e) => {
                     println!("{:?} panic:\n{}", thread::current(), e);
-                    return;
+                    return None;
                 }
             };
             //This is intended
@@ -425,10 +425,11 @@ impl Element {
                         elements_.append(&mut e[0].children);
                     }
                 }
-                return;
+                return None;
             }
 
             Self::append_element(&mut e, &mut elements_);
         }
+        Some(data)
     }
 }

@@ -11,6 +11,7 @@ pub struct CLI {
     pub max_comments: usize,
     pub sort_style: ElementSort,
     pub filter: ElementFilter,
+    pub save_tmp_files: bool,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
@@ -55,6 +56,7 @@ impl CLI {
         println!(" -s/--save specify save path(output.tmp by default)");
         println!(" -o/--output don't save to file just output to stdout");
         println!(" -m/--max set the max amount comments to get (min 2, to get the actual post)");
+        println!(" --save-tmp-files allow saving temp files (raw json data)");
         let padding = '\t';
         println!(" -f/--format set the format (not case sensitive)");
         println!(" Valid formats:");
@@ -287,6 +289,7 @@ impl CLI {
         let mut max_comments = usize::MAX;
         let mut sort_style = ElementSort::Default;
         let mut filter = ElementFilter::Default; //ElementFilter::Comments(ElementFilterOp::Grater(1));//ElementFilter::Edited(false);//ElementFilter::Author(ElementFilterOp::NotEqString(String::from("funambula")));
+        let mut save_tmp_files = false;
 
         if args.len() == 1 {
             Self::help(true);
@@ -360,6 +363,9 @@ impl CLI {
                         filter = filter_;
                         skip_count += skip_count_inc;
                     }
+                    "--save-tmp-files" => {
+                        save_tmp_files = true;
+                    }
                     _ => {
                         println!("Invalid argument: {}", args[i]);
                     }
@@ -380,6 +386,7 @@ impl CLI {
             max_comments,
             sort_style,
             filter,
+            save_tmp_files,
         }
     }
 

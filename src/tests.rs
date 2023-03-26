@@ -75,7 +75,8 @@ fn test_cli() {
             save_path: st("test-path.txt"),
             max_comments: USIZE_MAX,
             filter: CLI_ELEMENT_FILTER_DEF,
-            sort_style: CLI_ELEMENT_SORT_DEF
+            sort_style: CLI_ELEMENT_SORT_DEF,
+            save_tmp_files: false,
         }
     );
     assert_eq!(
@@ -93,7 +94,8 @@ fn test_cli() {
             save_path: st("test-path.txt"),
             max_comments: USIZE_MAX,
             filter: CLI_ELEMENT_FILTER_DEF,
-            sort_style: CLI_ELEMENT_SORT_DEF
+            sort_style: CLI_ELEMENT_SORT_DEF,
+            save_tmp_files: false,
         }
     );
     assert_eq!(
@@ -105,7 +107,8 @@ fn test_cli() {
             save_path: st("output.txt"),
             max_comments: USIZE_MAX,
             filter: CLI_ELEMENT_FILTER_DEF,
-            sort_style: CLI_ELEMENT_SORT_DEF
+            sort_style: CLI_ELEMENT_SORT_DEF,
+            save_tmp_files: false,
         }
     );
 }
