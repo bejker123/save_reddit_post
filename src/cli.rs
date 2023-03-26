@@ -10,9 +10,10 @@ pub struct CLI {
     pub save_path: String,
     pub max_comments: usize,
     pub sort_style: ElementSort,
+    pub filter: ElementFilter,
 }
 
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub enum ElementSort {
     Default,
     Rand,
@@ -20,6 +21,29 @@ pub enum ElementSort {
     Comments(bool),   //Ascending or not
     Date(bool),       //Ascending or not
     EditedDate(bool), //Ascending or not
+}
+
+#[derive(Eq, PartialEq, Debug, Clone)]
+pub enum ElementFilterOp {
+    //ElementFilterOperator
+    EqString(String),
+    NotEqString(String),
+
+    Eq(usize),
+    NotEq(usize),
+    Grater(usize),
+    GraterEq(usize),
+    Less(usize),
+    LessEq(usize),
+}
+
+#[derive(Eq, PartialEq, Debug, Clone)]
+pub enum ElementFilter {
+    Default, //Don't filter
+    Upvotes(ElementFilterOp),
+    Comments(ElementFilterOp),
+    Author(ElementFilterOp),
+    Edited(bool),
 }
 
 impl CLI {
@@ -30,41 +54,239 @@ impl CLI {
         println!(" -h/--help display this help");
         println!(" -s/--save specify save path(output.tmp by default)");
         println!(" -o/--output don't save to file just output to stdout");
-        println!(" -f/--format set the format (not case sensitive)");
         println!(" -m/--max set the max amount comments to get (min 2, to get the actual post)");
-        let ll = " --sort choose sort option form:";
-        let padding = " ".repeat(ll.len());
-        println!("{}", ll);
-        println!("{}default", padding);
-        println!("{}rand/random", padding);
-        println!("{}upvotes/ups", padding);
-        println!("{}upvotes/ups-asc", padding);
-        println!("{}comments by nr of child comments", padding);
-        println!("{}comments-asc", padding);
-        println!("{}new", padding);
-        println!("{}old", padding);
-        println!("{}edited", padding);
-        println!("{}edited-asc", padding);
-        let ll = " Valid formats:";
-        let padding = " ".repeat(ll.len());
-        println!("{}", ll);
-        println!("{}Default/d", padding);
-        println!("{}HTML/h", padding);
+        let padding = '\t';
+        println!(" -f/--format set the format (not case sensitive)");
+        println!(" Valid formats:");
+        println!("{padding}Default/d");
+        println!("{padding}HTML/h");
+        println!(" --sort choose sort option form:");
+        println!("{padding}default");
+        println!("{padding}rand/random");
+        println!("{padding}upvotes/ups");
+        println!("{padding}upvotes/ups-asc");
+        println!("{padding}comments by nr of child comments");
+        println!("{padding}comments-asc");
+        println!("{padding}new");
+        println!("{padding}old");
+        println!("{padding}edited");
+        println!("{padding}edited-asc");
+        println!(" --filter add filter option from: (multiple allowed as separate args)");
+        println!("{padding}[data] [operator] [value]");
+        println!("{padding}ups/upvotes > >= == < <= != [nr]");
+        println!("{padding}comments > >= == < <= != [nr]");
+        println!("{padding}edited [bool]");
+        println!("{padding}author == != [value]");
 
         if invalid_usage {
             println!("Invalid usage!");
         }
         if !cfg!(test) {
-            std::process::exit(invalid_usage as i32);
+            std::process::exit(0);
         }
     }
 
-    pub fn new(args: Vec<String>) -> CLI {
+    pub fn parse_format(format: &str) -> String {
+        let mut save_path = String::from("output.txt");
+
+        match format.to_lowercase().trim() {
+            "default" | "d" => {
+                unsafe {
+                    crate::element::FORMAT = crate::element::ElementFormat::Default;
+                }
+                save_path = String::from("output.txt");
+            }
+            "html" | "h" => {
+                unsafe {
+                    crate::element::FORMAT = crate::element::ElementFormat::HTML;
+                }
+                save_path = String::from("output.html");
+            }
+            "json" | "j" => {
+                unsafe {
+                    crate::element::FORMAT = crate::element::ElementFormat::JSON;
+                }
+                save_path = String::from("output.json");
+            }
+            _ => {
+                println!("Invalid format: {format}");
+                Self::help(true);
+            }
+        }
+        save_path
+    }
+
+    pub fn parse_sort_style(sort_style_: &str) -> ElementSort {
+        match sort_style_.to_lowercase().trim() {
+            "default" => ElementSort::Default,
+            "rand" | "random" => ElementSort::Rand,
+            "upvotes" | "ups" => ElementSort::Upvotes(false),
+            "upvotes-asc" | "ups-asc" => ElementSort::Upvotes(true),
+            "comments" => ElementSort::Comments(false),
+            "comments-asc" => ElementSort::Comments(true),
+            "new" => ElementSort::Date(false),
+            "old" => ElementSort::Date(true),
+            "edited" => ElementSort::EditedDate(false),
+            "edited-asc" => ElementSort::EditedDate(true),
+            //for adding more: "tmp"=>ElementSort::tmp,
+            _ => {
+                println!("Invalid sort option: {sort_style_}");
+                Self::help(true);
+                ElementSort::Default
+            }
+        }
+    }
+
+    pub fn parse_filter_style(
+        filter_: &String,
+        operator: Option<&String>,
+        value: Option<&String>,
+    ) -> (u32, ElementFilter) {
+        let mut filter = ElementFilter::Default;
+        let mut skip_count = 0;
+        match filter_.to_lowercase().trim() {
+            "ups" | "upvotes" => {
+                let value = value.unwrap();
+                skip_count += 2;
+                match operator.unwrap().as_str() {
+                    ">" => match value.parse::<usize>() {
+                        Ok(o) => {
+                            filter = ElementFilter::Upvotes(ElementFilterOp::Grater(o));
+                        }
+                        Err(_) => {
+                            println!("Invalid argument in filter: {filter_}");
+                        }
+                    },
+                    ">=" => match value.parse::<usize>() {
+                        Ok(o) => {
+                            filter = ElementFilter::Upvotes(ElementFilterOp::GraterEq(o));
+                        }
+                        Err(_) => {
+                            println!("Invalid argument in filter: {filter_}");
+                        }
+                    },
+                    "==" => match value.parse::<usize>() {
+                        Ok(o) => {
+                            filter = ElementFilter::Upvotes(ElementFilterOp::Eq(o));
+                        }
+                        Err(_) => {
+                            println!("Invalid argument in filter: {filter_}");
+                        }
+                    },
+                    "!=" => match value.parse::<usize>() {
+                        Ok(o) => {
+                            filter = ElementFilter::Upvotes(ElementFilterOp::NotEq(o));
+                        }
+                        Err(_) => {
+                            println!("Invalid argument in filter: {filter_}");
+                        }
+                    },
+                    "<" => match value.parse::<usize>() {
+                        Ok(o) => {
+                            filter = ElementFilter::Upvotes(ElementFilterOp::Less(o));
+                        }
+                        Err(_) => {
+                            println!("Invalid argument in filter: {filter_}");
+                        }
+                    },
+                    "<=" => match value.parse::<usize>() {
+                        Ok(o) => {
+                            filter = ElementFilter::Upvotes(ElementFilterOp::LessEq(o));
+                        }
+                        Err(_) => {
+                            println!("Invalid argument in filter: {filter_}");
+                        }
+                    },
+                    _ => println!("Invalid argument in filter: {filter_}"),
+                }
+            }
+            "comments" => {
+                let value = value.unwrap();
+                skip_count += 2;
+                match operator.unwrap().as_str() {
+                    ">" => match value.parse::<usize>() {
+                        Ok(o) => {
+                            filter = ElementFilter::Comments(ElementFilterOp::Grater(o));
+                        }
+                        Err(_) => {
+                            println!("Invalid argument in filter: {filter_}");
+                        }
+                    },
+                    ">=" => match value.parse::<usize>() {
+                        Ok(o) => {
+                            filter = ElementFilter::Comments(ElementFilterOp::GraterEq(o));
+                        }
+                        Err(_) => {
+                            println!("Invalid argument in filter: {filter_}");
+                        }
+                    },
+                    "==" => match value.parse::<usize>() {
+                        Ok(o) => {
+                            filter = ElementFilter::Comments(ElementFilterOp::Eq(o));
+                        }
+                        Err(_) => {
+                            println!("Invalid argument in filter: {filter_}");
+                        }
+                    },
+                    "!=" => match value.parse::<usize>() {
+                        Ok(o) => {
+                            filter = ElementFilter::Comments(ElementFilterOp::NotEq(o));
+                        }
+                        Err(_) => {
+                            println!("Invalid argument in filter: {filter_}");
+                        }
+                    },
+                    "<" => match value.parse::<usize>() {
+                        Ok(o) => {
+                            filter = ElementFilter::Comments(ElementFilterOp::Less(o));
+                        }
+                        Err(_) => {
+                            println!("Invalid argument in filter: {filter_}");
+                        }
+                    },
+                    "<=" => match value.parse::<usize>() {
+                        Ok(o) => {
+                            filter = ElementFilter::Comments(ElementFilterOp::LessEq(o));
+                        }
+                        Err(_) => {
+                            println!("Invalid argument in filter: {filter_}");
+                        }
+                    },
+                    _ => println!("Invalid argument in filter: {filter_}"),
+                }
+            }
+            "edited" => {
+                let operator = operator.unwrap().to_lowercase();
+                if operator.trim() == "false" {
+                    filter = ElementFilter::Edited(false);
+                } else {
+                    filter = ElementFilter::Edited(true);
+                }
+            }
+            "author" => {
+                let operator = operator.unwrap().to_lowercase();
+                if operator.trim() == "==" {
+                    filter =
+                        ElementFilter::Author(ElementFilterOp::EqString(value.unwrap().clone()));
+                } else if operator.trim() == "!=" {
+                    filter =
+                        ElementFilter::Author(ElementFilterOp::NotEqString(value.unwrap().clone()));
+                } else {
+                    println!("Invalid operator in filter: {operator}");
+                }
+            }
+            _ => println!("Invalid argument in filter: {filter_}"),
+        };
+        (skip_count, filter)
+    }
+
+    pub fn new(args: &[String]) -> CLI {
         let mut url = String::new();
         let mut save_to_file = true;
         let mut save_path = String::from("output.txt");
         let mut max_comments = usize::MAX;
         let mut sort_style = ElementSort::Default;
+        let mut filter = ElementFilter::Default; //ElementFilter::Comments(ElementFilterOp::Grater(1));//ElementFilter::Edited(false);//ElementFilter::Author(ElementFilterOp::NotEqString(String::from("funambula")));
 
         if args.len() == 1 {
             Self::help(true);
@@ -102,30 +324,7 @@ impl CLI {
                         }
                         skip_count += 1;
                         let format = args[i + 1].clone().to_lowercase();
-                        match format.as_str() {
-                            "default" | "d" => {
-                                unsafe {
-                                    crate::element::FORMAT = crate::element::ElementFormat::Default
-                                }
-                                save_path = String::from("output.txt")
-                            }
-                            "html" | "h" => {
-                                unsafe {
-                                    crate::element::FORMAT = crate::element::ElementFormat::HTML
-                                }
-                                save_path = String::from("output.html")
-                            }
-                            "json" | "j" => {
-                                unsafe {
-                                    crate::element::FORMAT = crate::element::ElementFormat::JSON
-                                }
-                                save_path = String::from("output.json")
-                            }
-                            _ => {
-                                println!("Invalid format: {}", args[i + 1]);
-                                Self::help(true);
-                            }
-                        }
+                        save_path = Self::parse_format(format.as_str());
                     }
                     "-m" | "--max" => {
                         if args.len() < i + 1 {
@@ -133,12 +332,11 @@ impl CLI {
                         }
                         skip_count += 1;
                         let max_comments_ = args[i + 1].clone();
-                        match max_comments_.parse::<usize>() {
-                            Ok(o) => max_comments = std::cmp::max(o, 2),
-                            Err(_) => {
-                                println!("Invalid format: {}", args[i + 1]);
-                                Self::help(true);
-                            }
+                        if let Ok(o) = max_comments_.parse::<usize>() {
+                            max_comments = std::cmp::max(o, 2);
+                        } else {
+                            println!("Invalid format: {}", args[i + 1]);
+                            Self::help(true);
                         }
                     }
                     "--sort" => {
@@ -147,26 +345,23 @@ impl CLI {
                         }
                         skip_count += 1;
                         let sort_style_ = args[i + 1].clone().trim().to_lowercase();
-                        match sort_style_.as_str() {
-                            "default" => {}
-                            "rand" | "random" => sort_style = ElementSort::Rand,
-                            "upvotes" | "ups" => sort_style = ElementSort::Upvotes(false),
-                            "upvotes-asc" | "ups-asc" => sort_style = ElementSort::Upvotes(true),
-                            "comments" => sort_style = ElementSort::Comments(false),
-                            "comments-asc" => sort_style = ElementSort::Comments(true),
-                            "new" => sort_style = ElementSort::Date(false),
-                            "old" => sort_style = ElementSort::Date(true),
-                            "edited" => sort_style = ElementSort::EditedDate(false),
-                            "edited-asc" => sort_style = ElementSort::EditedDate(true),
-                            //for adding more: "tmp"=>sort_style = ElementSort::tmp,
-                            _ => {
-                                println!("Invalid sort option: {}", args[i + 1]);
-                                Self::help(true);
-                            }
+                        sort_style = Self::parse_sort_style(sort_style_.as_str());
+                    }
+                    "--filter" => {
+                        if args.len() < i + 1 {
+                            Self::help(true);
                         }
+                        skip_count += 1;
+                        let filter_ = args.get(i + 1);
+                        let operator = args.get(i + 2);
+                        let value = args.get(i + 3);
+                        let (skip_count_inc, filter_) =
+                            Self::parse_filter_style(filter_.unwrap(), operator, value);
+                        filter = filter_;
+                        skip_count += skip_count_inc;
                     }
                     _ => {
-                        println!("Invalid argument: {}", args[i])
+                        println!("Invalid argument: {}", args[i]);
                     }
                 }
             }
@@ -184,12 +379,14 @@ impl CLI {
             save_path,
             max_comments,
             sort_style,
+            filter,
         }
     }
 
     pub fn parse_url(mut url: String) -> (String, String) {
         if !url.contains("reddit.com/") {
-            panic!("Invalid url: {}", url);
+            println!("Invalid url: {url}");
+            Self::help(true);
         }
 
         url = url.replace('\'', "");
@@ -205,12 +402,11 @@ impl CLI {
 
         let search_for = "https://";
 
-        let start_idx = match url.find(search_for) {
-            Some(o) => o + search_for.len(),
-            _ => {
-                url = search_for.to_owned() + &url;
-                search_for.len() - 1
-            }
+        let start_idx = if let Some(o) = url.find(search_for) {
+            o + search_for.len()
+        } else {
+            url = search_for.to_owned() + &url;
+            search_for.len() - 1
         };
 
         url = match url[start_idx..].rfind(':') {
@@ -222,7 +418,8 @@ impl CLI {
 
         //If url doens't contain at least 3 / it's assumed to be invalid
         if url.matches('/').count() < 3 {
-            panic!("Invalid url: {}", url)
+            println!("Invalid url: {url}");
+            Self::help(true);
         }
 
         if url.ends_with('/') {
@@ -231,7 +428,10 @@ impl CLI {
             base_url += "/";
         }
 
-        if !url.ends_with(".json") {
+        if !std::path::Path::new(&url)
+            .extension()
+            .map_or(false, |ext| ext.eq_ignore_ascii_case("json"))
+        {
             url += ".json";
         }
 

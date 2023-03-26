@@ -17,7 +17,7 @@ use std::io::Write;
 pub struct Empty;
 
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ElementFormat {
     Default,
     HTML,
@@ -49,7 +49,7 @@ macro_rules! get_data_wrapper {
 //TODO: add better debug formatting
 #[derive(Clone)]
 pub struct Element {
-    author: String,
+    pub author: String,
     data: String,
     kind: String,
     url: String, //url_overridden_by_dest
@@ -57,7 +57,8 @@ pub struct Element {
     pub children: Vec<Element>,
     depth: String,
     permalink: String,
-    id: String,
+    pub id: String,
+    pub parent_id: String,
     over_18: bool,
     pub created: usize,
     pub edited: usize,
@@ -113,23 +114,26 @@ impl std::fmt::Debug for Element {
                 let indent_char = " ";
                 let indent = "\t".to_owned()
                     + &indent_char.repeat(usize::from_str(&self.depth).unwrap_or(0));
-                let url = if !self.url.is_empty() {
-                    format!("<a href=\"{}\">{}</a>", self.url, self.url)
-                } else {
+                let url = if self.url.is_empty() {
                     String::new()
+                } else {
+                    format!("<a href=\"{}\">{}</a>", self.url, self.url)
                 };
+                let mut children_string = String::new();
+                if !children.is_empty() {
+                    children_string = format!("<ul>{children}</ul>");
+                }
+                let href = String::from("https://reddit.com") + &self.permalink;
+                let author = self.author.clone();
+                let ups = self.ups;
+                let span_data = self.data.strip_prefix(&self.url).unwrap();
                 f.write_fmt(format_args!(
-                    "\n{indent}<div class=\"element\">\n\t
-                    {indent}<h4><a href=\"{}\">{}</a> ⬆️{}:</h4>
+                    "\n{indent}<div class=\"element\">
+                    {indent}<h4><a href=\"{href}\">{author}</a> ⬆️{ups}:</h4>
                     {url}
-                    <span>{}</span>
-                    <ul>{children}</ul>
-                    \n{indent}
-                    </div>", //TODO: add human readable formatting
-                    String::from("https://reddit.com") + &self.permalink,
-                    self.author,
-                    self.ups,
-                    self.data.strip_prefix(&self.url).unwrap(),
+                    <span>{span_data}</span>
+                    {children_string}
+                    \n{indent}</div>", //TODO: add human readable formatting
                 ))
             }
             ElementFormat::JSON => {
@@ -206,12 +210,12 @@ impl Element {
             }
         }
 
-        let _title = get_data_wrapper!(data, title, String::new());
+        let title_ = get_data_wrapper!(data, title, String::new());
         let url = get_data_wrapper!(data, url, String::new());
         let selftext = get_data_wrapper!(data, selftext, String::new());
         let body = get_data_wrapper!(data, body, String::new());
         add_to_total(url);
-        add_to_total(_title);
+        add_to_total(title_);
         add_to_total(selftext);
         add_to_total(body);
 
@@ -248,6 +252,13 @@ impl Element {
                 depth: get_data_wrapper!(data, depth, "0".to_string()),
                 permalink: get_data_wrapper!(data, permalink, String::new()),
                 id: get_data_wrapper!(data, id, String::new()),
+                parent_id: {
+                    let mut pid = get_data_wrapper!(data, parent_id, String::new());
+                    if pid.len() > 3 {
+                        pid = pid[3..].to_string();
+                    }
+                    pid
+                },
                 over_18: get_data_wrapper!(data, over_18, String::from("false")) == *"true",
                 created: match get_data_wrapper!(data, created, usize::MAX.to_string())
                     .parse::<f32>()
@@ -274,7 +285,7 @@ impl Element {
                 }
                 //.If created element isn't empty (Ok) push it.
                 if let Ok(o) = Element::create(child, max_elements) {
-                    elements.push(o)
+                    elements.push(o);
                 }
             }
         }
@@ -288,10 +299,7 @@ impl Element {
                 if get_safe!(ELEMENTS_COUNT) >= max_elements {
                     break;
                 }
-                let element = match Element::create(child, max_elements) {
-                    Ok(o) => o,
-                    _ => continue,
-                };
+                let Ok(element) = Element::create(child, max_elements) else {continue};
 
                 out.push(element);
             }
@@ -309,6 +317,26 @@ impl Element {
         Err(Empty {})
     }
 
+    //Recursively check every element, and if the first element matches appedn to it
+    fn append_element(x: &mut Vec<Element>, y: &mut Vec<Element>) {
+        for element in &mut *y {
+            if x.is_empty() {
+                break;
+            }
+            if *element == x[0] {
+                x.remove(0);
+                unsafe {
+                    ELEMENTS_COUNT -= 1;
+                }
+                element.children.append(x);
+                break;
+            }
+        }
+        for e in y {
+            Self::append_element(x, &mut e.children);
+        }
+    }
+
     pub async fn get_more_element(
         base_url: String,
         idx: Arc<Mutex<f64>>,
@@ -324,12 +352,15 @@ impl Element {
         let url = base_url;
         let res = request(url, None).await;
 
-        let data = match res.text().await {
-            Ok(o) => o,
-            _ => todo!(), //TODO: add restarting
-        };
+        let Ok(data) = res.text().await else { todo!() };
 
-        let json_data = json::parse(&data).unwrap();
+        let json_data = match json::parse(&data) {
+            Ok(o) => o,
+            Err(e) => {
+                println!("Failed to parse json data with error: {e}");
+                std::process::exit(0);
+            }
+        };
 
         //Parse json data to elements
         let mut e = Element::init(&json_data, max_comments);
@@ -397,27 +428,7 @@ impl Element {
                 return;
             }
 
-            //Recursively check every element, and if the first element matches appedn to it
-            fn app(x: &mut Vec<Element>, y: &mut Vec<Element>) {
-                for element in &mut *y {
-                    if x.is_empty() {
-                        break;
-                    }
-                    if *element == x[0] {
-                        x.remove(0);
-                        unsafe {
-                            ELEMENTS_COUNT -= 1;
-                        }
-                        element.children.append(x);
-                        break;
-                    }
-                }
-                for e in y {
-                    app(x, &mut e.children);
-                }
-            }
-
-            app(&mut e, &mut elements_);
+            Self::append_element(&mut e, &mut elements_);
         }
     }
 }

@@ -5,13 +5,13 @@ mod element;
 use element::*;
 
 mod cli;
-use cli::*;
+use cli::CLI;
 
 mod output_writer;
-use output_writer::*;
+use output_writer::OutputWriter;
 
 mod utils;
-use utils::*;
+use utils::{convert_time, filter_elements, request, sort_elements};
 
 mod tests;
 
@@ -19,25 +19,21 @@ use std::{io::Write, process::exit, sync::Arc, sync::Mutex, time::SystemTime};
 
 #[tokio::main]
 async fn main() {
-    print!("Initialising: ");
     let args: Vec<String> = std::env::args().collect();
     let start = SystemTime::now();
-    let cli = CLI::new(args);
+    let cli = CLI::new(&args);
 
-    println!("success.");
+    println!("Initialising: success.");
 
     print!("Requesting content from {}\nStatus: ", cli.url);
     let res = request(cli.url, None).await;
 
-    let data = match res.text().await {
-        Ok(o) => {
-            println!("success.");
-            o
-        }
-        _ => {
-            println!("fail.");
-            exit(1);
-        }
+    let data = if let Ok(o) = res.text().await {
+        println!("success.");
+        o
+    } else {
+        println!("fail.");
+        exit(1);
     };
 
     println!(
@@ -47,15 +43,12 @@ async fn main() {
 
     print!("Parsing to JSON: ");
 
-    let json_data = match json::parse(&data) {
-        Ok(o) => {
-            println!("success.");
-            o
-        }
-        _ => {
-            println!("fail.");
-            exit(1);
-        }
+    let json_data = if let Ok(o) = json::parse(&data) {
+        println!("success.");
+        o
+    } else {
+        println!("fail.");
+        exit(1);
     };
 
     print!("Writing to JSON file: ");
@@ -74,10 +67,10 @@ async fn main() {
 
     let elements = Element::init(&json_data, cli.max_comments);
 
-    if !elements.is_empty() {
-        println!("success.");
-    } else {
+    if elements.is_empty() {
         println!("fail.");
+    } else {
+        println!("success.");
     }
 
     let more_start = std::time::SystemTime::now();
@@ -136,23 +129,32 @@ async fn main() {
         println!();
     }
 
-    if get_safe!(ELEMENTS_COUNT) == 0 {
-        panic!("Error, returned 0 elements!");
-    }
+    assert!(
+        get_safe!(ELEMENTS_COUNT) != 0,
+        "Error, returned 0 elements!"
+    );
 
     let mut elements = elements.lock().unwrap().clone();
 
     //Sort elements (except the first one which is the parent element or the reddit post)
     if elements.len() > 1 {
-        let mut elements_cp = Vec::from([match elements.get(0) {
-            Some(o) => o.clone(),
-            None => panic!("Error, invalid elements!"),
-        }]);
-        elements_cp.append(
-            &mut sort_elements(elements[1..elements.len() - 1].to_vec(), cli.sort_style)
-                .unwrap_or(Vec::new()),
-        );
-        elements = elements_cp;
+        //Filter elements.
+        elements = match filter_elements(elements, cli.filter, vec![]) {
+            Some(o) => o.0,
+            None => panic!("Error, no elements, after filtering."),
+        };
+        //Sort elements.
+        if elements.len() > 2 {
+            let mut elements_cp = Vec::from([match elements.get(0) {
+                Some(o) => o.clone(),
+                None => panic!("Error, invalid elements!"),
+            }]);
+            elements_cp.append(
+                &mut sort_elements(elements[1..elements.len() - 1].to_vec(), cli.sort_style)
+                    .unwrap_or(Vec::new()),
+            );
+            elements = elements_cp;
+        }
     }
 
     //Set the default output to stdout
@@ -161,17 +163,16 @@ async fn main() {
     //If user specified saving to a file.
     //Change the output to the file.
     if cli.save_to_file {
-        output = Box::new(
-            std::fs::OpenOptions::new()
-                .create(true)
-                .write(true)
-                .truncate(true)
-                .open(cli.save_path.clone())
-                .unwrap(),
-        );
+        output = match std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(cli.save_path.clone())
+        {
+            Ok(o) => Box::new(o),
+            Err(e) => panic!("Failed to open file with error: {e}"),
+        };
         print!("Writing to {}: ", cli.save_path);
-    } else {
-        print!("Writing to stdout: ");
     }
     let mut ow = OutputWriter::new();
     ow = ow.set_output(output);
@@ -182,10 +183,10 @@ async fn main() {
             ow.content += &format!(
                 "# {{indent}} {{ups}} {{author}}: {{contnet}}\n\nSource: {}",
                 cli.base_url
-            )
+            );
         }
         ElementFormat::HTML => {
-            ow.content += &include_str!("html_file.html").replace("{title}", &cli.base_url)
+            ow.content += &include_str!("html_file.html").replace("{title}", &cli.base_url);
         }
         ElementFormat::JSON => ow.content += "{\"data\":[",
     }
@@ -193,8 +194,8 @@ async fn main() {
     //Write every element to the output.
     //For formatting see element.rs:
     //                   impl std::fmt::Debug for Element
-    for elem in elements.iter() {
-        ow.content += &format!("{elem:?}")
+    for elem in &elements {
+        ow.content += &format!("{elem:?}");
     }
 
     //Write the end:
@@ -205,13 +206,18 @@ async fn main() {
             if let Some(r) = ow.content.clone().strip_suffix(",\n") {
                 ow.content = r.to_owned();
             }
-            ow.content += "\n]}"
+            ow.content += "\n]}";
         }
     }
 
     match ow.write() {
-        Ok(_) => println!("success"),
-        Err(e) => panic!("ow.write() error:\n{}", e),
+        Ok(_) => {
+            if !cli.save_to_file {
+                print!("Writing to stdout: ");
+            }
+            println!("success");
+        }
+        Err(e) => panic!("ow.write() error:\n{e}"),
     }
 
     //Print last bit of debug data
