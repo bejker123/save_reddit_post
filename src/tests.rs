@@ -470,7 +470,11 @@ fn test_cli_parse_filter_style() {
     );
 
     assert_eq!(
-        cli::CLI::parse_filter_style(&String::from(" \n\n\n\n\t\rEdItEd\n\n\n\n\n\t\r"), Some(&String::from("true")), None),
+        cli::CLI::parse_filter_style(
+            &String::from(" \n\n\n\n\t\rEdItEd\n\n\n\n\n\t\r"),
+            Some(&String::from("true")),
+            None
+        ),
         (0, cli::ElementFilter::Edited(true))
     );
 
@@ -485,7 +489,7 @@ fn test_cli_parse_filter_style() {
     );
 
     //Test invalid params
-    
+
     assert_eq!(
         cli::CLI::parse_filter_style(&String::from("asd"), None, None),
         (0, cli::ElementFilter::Default)
@@ -495,5 +499,4 @@ fn test_cli_parse_filter_style() {
         cli::CLI::parse_filter_style(&String::from("E dited"), None, None),
         (0, cli::ElementFilter::Default)
     );
-
 }
