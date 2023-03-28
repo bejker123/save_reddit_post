@@ -263,11 +263,13 @@ impl Element {
                 created: match get_data_wrapper!(data, created, usize::MAX.to_string())
                     .parse::<f32>()
                 {
+                    #[allow(clippy::cast_possible_truncation)]
                     Ok(o) => o as usize,
                     _ => usize::MAX,
                 },
                 edited: match get_data_wrapper!(data, edited, usize::MAX.to_string()).parse::<f32>()
                 {
+                    #[allow(clippy::cast_possible_truncation)]
                     Ok(o) => o as usize,
                     _ => usize::MAX,
                 },

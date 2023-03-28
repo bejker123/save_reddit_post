@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 //Allow this, bcs when running tests compiler throws a dead code warning which is not true.
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug,Clone)]
 #[allow(clippy::upper_case_acronyms)] //my preference
 pub struct CLI {
     pub url: String,
@@ -356,11 +356,8 @@ impl CLI {
                             Self::help(true);
                         }
                         skip_count += 1;
-                        let filter_ = args.get(i + 1);
-                        let operator = args.get(i + 2);
-                        let value = args.get(i + 3);
                         let (skip_count_inc, filter_) =
-                            Self::parse_filter_style(filter_.unwrap(), operator, value);
+                            Self::parse_filter_style(args.get(i + 1).unwrap(), args.get(i + 2), args.get(i + 3));
                         filter = filter_;
                         skip_count += skip_count_inc;
                     }

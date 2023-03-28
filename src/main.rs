@@ -17,6 +17,90 @@ mod tests;
 
 use std::{io::Write, process::exit, sync::Arc, sync::Mutex, time::SystemTime};
 
+fn write_to_output(cli: &cli::CLI,elements: &Vec<Element>,start: SystemTime) -> Result<(),String>{
+    //Set the default output to stdout
+    let mut output: Box<dyn Write> = Box::new(std::io::stdout());
+
+    //If user specified saving to a file.
+    //Change the output to the file.
+    if cli.save_to_file {
+        output = match std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(cli.save_path.clone())
+        {
+            Ok(o) => Box::new(o),
+            Err(e) => return Err(format!("Failed to open file with error: {e}")),
+        };
+        print!("Writing to {}: ", cli.save_path);
+    }
+    let mut ow = OutputWriter::new();
+    ow = ow.set_output(output);
+
+    //Write begining of the file:
+    match get_safe!(FORMAT) {
+        ElementFormat::Default => {
+            ow.content += &format!(
+                "# {{indent}} {{ups}} {{author}}: {{contnet}}\n\nSource: {}",
+                cli.base_url
+            );
+        }
+        ElementFormat::HTML => {
+            ow.content += &include_str!("html_file.html").replace("{title}", &cli.base_url);
+        }
+        ElementFormat::JSON => ow.content += "{\"data\":[",
+    }
+
+    //Write every element to the output.
+    //For formatting see element.rs:
+    //                   impl std::fmt::Debug for Element
+    for elem in elements {
+        ow.content += &format!("{elem:?}");
+    }
+
+    //Write the end:
+    match get_safe!(FORMAT) {
+        ElementFormat::Default => {}
+        ElementFormat::HTML => ow.content += "\t</div>\n</body>\n</html>",
+        ElementFormat::JSON => {
+            if let Some(r) = ow.content.clone().strip_suffix(",\n") {
+                ow.content = r.to_owned();
+            }
+            ow.content += "\n]}";
+        }
+    }
+
+    match ow.write() {
+        Ok(_) => {
+            if !cli.save_to_file {
+                print!("Writing to stdout: ");
+            }
+            println!("success");
+        }
+        Err(e) => return Err(format!("ow.write() error:\n{e}")),
+    }
+
+    //Print last bit of debug data
+    //TODO: fix descrepency!!!
+    print!(
+        "Successfully got {} element{} NUM_COMMENTS: {}",
+        get_safe!(ELEMENTS_COUNT),
+        if get_safe!(ELEMENTS_COUNT) == 1 {
+            ""
+        } else {
+            "s"
+        },
+        get_safe!(NUM_COMMENTS)
+    );
+
+    println!(
+        ", in {}",
+        convert_time(start.elapsed().unwrap().as_millis() as f64 / 1000f64)
+    );
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -26,7 +110,7 @@ async fn main() {
     println!("Initialising: success.");
 
     print!("Requesting content from {}\nStatus: ", cli.url);
-    let res = request(cli.url, None).await;
+    let res = request(cli.url.clone(), None).await;
 
     let data = if let Ok(o) = res.text().await {
         println!("success.");
@@ -44,10 +128,10 @@ async fn main() {
     print!("Parsing to JSON: ");
 
     let json_data = if let Ok(o) = json::parse(&data) {
-        println!("success.");
+        print!("success ");
         o
     } else {
-        println!("fail.");
+        print!("fail");
         exit(1);
     };
 
@@ -159,7 +243,7 @@ async fn main() {
     //Sort elements (except the first one which is the parent element or the reddit post)
     if elements.len() > 1 {
         //Filter elements.
-        elements = match filter_elements(elements, cli.filter, vec![]) {
+        elements = match filter_elements(elements, cli.filter.clone(), vec![]) {
             Some(o) => o.0,
             None => panic!("Error, no elements, after filtering."),
         };
@@ -177,84 +261,7 @@ async fn main() {
         }
     }
 
-    //Set the default output to stdout
-    let mut output: Box<dyn Write> = Box::new(std::io::stdout());
-
-    //If user specified saving to a file.
-    //Change the output to the file.
-    if cli.save_to_file {
-        output = match std::fs::OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(cli.save_path.clone())
-        {
-            Ok(o) => Box::new(o),
-            Err(e) => panic!("Failed to open file with error: {e}"),
-        };
-        print!("Writing to {}: ", cli.save_path);
+    if let Err(e) = write_to_output(&cli, &elements, start){
+        println!("Writing to output failed: {e}");
     }
-    let mut ow = OutputWriter::new();
-    ow = ow.set_output(output);
-
-    //Write begining of the file:
-    match get_safe!(FORMAT) {
-        ElementFormat::Default => {
-            ow.content += &format!(
-                "# {{indent}} {{ups}} {{author}}: {{contnet}}\n\nSource: {}",
-                cli.base_url
-            );
-        }
-        ElementFormat::HTML => {
-            ow.content += &include_str!("html_file.html").replace("{title}", &cli.base_url);
-        }
-        ElementFormat::JSON => ow.content += "{\"data\":[",
-    }
-
-    //Write every element to the output.
-    //For formatting see element.rs:
-    //                   impl std::fmt::Debug for Element
-    for elem in &elements {
-        ow.content += &format!("{elem:?}");
-    }
-
-    //Write the end:
-    match get_safe!(FORMAT) {
-        ElementFormat::Default => {}
-        ElementFormat::HTML => ow.content += "\t</div>\n</body>\n</html>",
-        ElementFormat::JSON => {
-            if let Some(r) = ow.content.clone().strip_suffix(",\n") {
-                ow.content = r.to_owned();
-            }
-            ow.content += "\n]}";
-        }
-    }
-
-    match ow.write() {
-        Ok(_) => {
-            if !cli.save_to_file {
-                print!("Writing to stdout: ");
-            }
-            println!("success");
-        }
-        Err(e) => panic!("ow.write() error:\n{e}"),
-    }
-
-    //Print last bit of debug data
-    //TODO: fix descrepency!!!
-    print!(
-        "Successfully got {} element{} NUM_COMMENTS: {}",
-        get_safe!(ELEMENTS_COUNT),
-        if get_safe!(ELEMENTS_COUNT) == 1 {
-            ""
-        } else {
-            "s"
-        },
-        get_safe!(NUM_COMMENTS)
-    );
-
-    println!(
-        ", in {}",
-        convert_time(start.elapsed().unwrap().as_millis() as f64 / 1000f64)
-    );
 }
