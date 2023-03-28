@@ -28,7 +28,7 @@ pub async fn request(url: String, retries: Option<usize>) -> reqwest::Response {
 //Convert time in seconds to a more readable format
 // Xh Ymin Zs
 pub fn convert_time(t: f64) -> String {
-    if t == 0.0 {
+    if t <= 0.0 {
         String::new()
     } else if t < 60.0 {
         format!("{t:.2}s")

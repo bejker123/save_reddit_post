@@ -4,7 +4,7 @@
 mod cli;
 use cli::CLI;
 
-use crate::element::FORMAT;
+use crate::{element::FORMAT, utils};
 
 fn st(x: &str) -> String {
     x.to_string()
@@ -516,4 +516,19 @@ fn test_cli_parse_filter_style() {
         cli::CLI::parse_filter_style(&String::from("E dited"), None, None),
         (0, cli::ElementFilter::Default)
     );
+}
+
+#[test]
+fn test_urils_convert_time(){
+    assert_eq!(utils::convert_time(-100.0),String::new());
+    assert_eq!(utils::convert_time(0.0),String::new());
+    assert_eq!(utils::convert_time(0.99),String::from("0.99s"));
+    assert_eq!(utils::convert_time(0.999),String::from("1.00s"));
+    assert_eq!(utils::convert_time(10.0),String::from("10.00s"));
+    assert_eq!(utils::convert_time(71.13),String::from("1min 11.13s"));
+    assert_eq!(utils::convert_time(100.11),String::from("1min 40.11s"));
+    assert_eq!(utils::convert_time(3671.0),String::from("1h 1min 11.00s"));
+    assert_eq!(utils::convert_time(36710.0),String::from("10h 11min 50.00s"));
+    assert_eq!(utils::convert_time(1000000.0),String::from("277h 46min 40.00s"));
+    assert_eq!(utils::convert_time(1000000.789),String::from("277h 46min 40.79s"));
 }
