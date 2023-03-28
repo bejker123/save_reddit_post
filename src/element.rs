@@ -234,7 +234,7 @@ impl Element {
             //Use this for clarity
             #[allow(clippy::redundant_field_names)]
             Element {
-                author: author,
+                author,
                 data: total_data,
                 children: match Element::get_replies(data, max_elements) {
                     Ok(o) => o,

@@ -62,6 +62,7 @@ impl CLI {
         println!(" Valid formats:");
         println!("{padding}Default/d");
         println!("{padding}HTML/h");
+        println!("{padding}JSON/j");
         println!(" --sort choose sort option form:");
         println!("{padding}default");
         println!("{padding}rand/random");
