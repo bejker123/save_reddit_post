@@ -346,7 +346,7 @@ impl Element {
         last_line_length: Arc<Mutex<usize>>,
         elements: Arc<Mutex<Vec<Element>>>,
         max_comments: usize,
-    ) -> Option<String>{
+    ) -> Option<String> {
         if get_safe!(ELEMENTS_COUNT) >= max_comments {
             return None;
         }

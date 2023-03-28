@@ -1,7 +1,7 @@
-#![allow(dead_code)]
+use console::style;
 
 //Allow this, bcs when running tests compiler throws a dead code warning which is not true.
-#[derive(PartialEq, Eq, Debug,Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)] //my preference
 pub struct CLI {
     pub url: String,
@@ -48,41 +48,81 @@ pub enum ElementFilter {
 }
 
 impl CLI {
+    fn print_arg(arg: &str, desc: &str) {
+        println!(" {} {}", style(arg).yellow().bold(), style(desc).blue());
+    }
+
     fn help(invalid_usage: bool) {
-        println!("Usage:");
-        println!("srp <arguments> <url>");
-        println!("Valid arguments:");
-        println!(" -h/--help display this help");
-        println!(" -s/--save specify save path(output.tmp by default)");
-        println!(" -o/--output don't save to file just output to stdout");
-        println!(" -m/--max set the max amount comments to get (min 2, to get the actual post)");
-        println!(" --save-tmp-files allow saving temp files (raw json data)");
+        println!("{}", style("Usage:").green().bold());
+        println!(
+            "{} {} {}",
+            style("srp").green(),
+            style("<arguments>").yellow().bold(),
+            style("<url>").magenta().bold()
+        );
+        println!("{}", style("Valid arguments:").green().bold());
+
+        Self::print_arg("-h/--help", "display this help");
+        Self::print_arg("-s/--save", "specify save path(output.tmp by default)");
+        Self::print_arg("-o/--output", "don't save to file just output to stdout");
+        Self::print_arg(
+            "-m/--max",
+            "set the max amount comments to get (min 2, to get the actual post)",
+        );
+        Self::print_arg(
+            "--save-tmp-files",
+            "allow saving temp files (raw json data)",
+        );
+        Self::print_arg("-f/--format", "set the format (not case sensitive)");
+
         let padding = '\t';
-        println!(" -f/--format set the format (not case sensitive)");
-        println!(" Valid formats:");
-        println!("{padding}Default/d");
-        println!("{padding}HTML/h");
-        println!("{padding}JSON/j");
-        println!(" --sort choose sort option form:");
-        println!("{padding}default");
-        println!("{padding}rand/random");
-        println!("{padding}upvotes/ups");
-        println!("{padding}upvotes/ups-asc");
-        println!("{padding}comments by nr of child comments");
-        println!("{padding}comments-asc");
-        println!("{padding}new");
-        println!("{padding}old");
-        println!("{padding}edited");
-        println!("{padding}edited-asc");
-        println!(" --filter add filter option from: (multiple allowed as separate args)");
-        println!("{padding}[data] [operator] [value]");
-        println!("{padding}ups/upvotes > >= == < <= != [nr]");
-        println!("{padding}comments > >= == < <= != [nr]");
-        println!("{padding}edited [bool]");
-        println!("{padding}author == != [value]");
+        println!(" {}", style("Valid formats:").green().bold());
+        println!("{padding}{}", style("Default/d").yellow());
+        println!("{padding}{}", style("HTML/h").yellow());
+        println!("{padding}{}", style("JSON/j").yellow());
+
+        Self::print_arg("--sort", "choose sort option form:");
+        println!("{padding}{}", style("default").yellow());
+        println!("{padding}{}", style("rand/random").yellow());
+        println!("{padding}{}", style("upvotes/ups").yellow());
+        println!("{padding}{}", style("upvotes/ups-asc").yellow());
+        println!(
+            "{padding}{}",
+            style("comments by nr of child comments").yellow()
+        );
+        println!("{padding}{}", style("comments-asc").yellow());
+        println!("{padding}{}", style("new").yellow());
+        println!("{padding}{}", style("old").yellow());
+        println!("{padding}{}", style("edited").yellow());
+        println!("{padding}{}", style("edited-asc").yellow());
+
+        Self::print_arg(
+            "--filter",
+            "add filter option from: (multiple allowed as separate args)",
+        );
+        println!(
+            "{padding}{}",
+            style("[data] [operator] [value]").yellow().bold()
+        );
+        println!(
+            "{padding}{}",
+            style("ups/upvotes > >= == < <= != [nr]").yellow()
+        );
+        println!(
+            "{padding}{}",
+            style("comments > >= == < <= != [nr]").yellow()
+        );
+        println!(
+            "{padding}{}",
+            style("edited [bool]").yellow()
+        );
+        println!(
+            "{padding}{}",
+            style("author == != [value]").yellow()
+        );
 
         if invalid_usage {
-            println!("Invalid usage!");
+            println!("{}", style("Invalid usage!").bold().red());
         }
         if !cfg!(test) {
             std::process::exit(0);
@@ -356,8 +396,11 @@ impl CLI {
                             Self::help(true);
                         }
                         skip_count += 1;
-                        let (skip_count_inc, filter_) =
-                            Self::parse_filter_style(args.get(i + 1).unwrap(), args.get(i + 2), args.get(i + 3));
+                        let (skip_count_inc, filter_) = Self::parse_filter_style(
+                            args.get(i + 1).unwrap(),
+                            args.get(i + 2),
+                            args.get(i + 3),
+                        );
                         filter = filter_;
                         skip_count += skip_count_inc;
                     }

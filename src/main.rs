@@ -17,7 +17,11 @@ mod tests;
 
 use std::{io::Write, process::exit, sync::Arc, sync::Mutex, time::SystemTime};
 
-fn write_to_output(cli: &cli::CLI,elements: &Vec<Element>,start: SystemTime) -> Result<(),String>{
+fn write_to_output(
+    cli: &cli::CLI,
+    elements: &Vec<Element>,
+    start: SystemTime,
+) -> Result<(), String> {
     //Set the default output to stdout
     let mut output: Box<dyn Write> = Box::new(std::io::stdout());
 
@@ -137,9 +141,9 @@ async fn main() {
 
     let start = SystemTime::now();
 
-    if cli.save_tmp_files{
+    if cli.save_tmp_files {
         let tmp_dir = std::path::Path::new("tmp");
-        if !tmp_dir.exists(){
+        if !tmp_dir.exists() {
             std::fs::create_dir(tmp_dir).unwrap();
         }
         print!("Writing to JSON file: ");
@@ -174,7 +178,7 @@ async fn main() {
     let elements = Arc::new(Mutex::new(elements));
 
     let more_elements_dir = std::path::Path::new("tmp/more_elements");
-    if cli.save_tmp_files && !more_elements_dir.exists(){
+    if cli.save_tmp_files && !more_elements_dir.exists() {
         std::fs::create_dir(more_elements_dir).unwrap();
     }
 
@@ -209,10 +213,12 @@ async fn main() {
                     elements,
                     cli.max_comments,
                 )
-                .await{
-                    if cli.save_tmp_files{
+                .await
+                {
+                    if cli.save_tmp_files {
                         let filename = x.replace(&base_url, "").trim().to_owned();
-                        let mut file = std::fs::File::create(more_elements_dir+"/"+&filename).unwrap();
+                        let mut file =
+                            std::fs::File::create(more_elements_dir + "/" + &filename).unwrap();
                         file.write_fmt(format_args!("{o}")).unwrap();
                     }
                 }
@@ -261,7 +267,7 @@ async fn main() {
         }
     }
 
-    if let Err(e) = write_to_output(&cli, &elements, start){
+    if let Err(e) = write_to_output(&cli, &elements, start) {
         println!("Writing to output failed: {e}");
     }
 }

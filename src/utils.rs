@@ -33,9 +33,13 @@ pub fn convert_time(t: f64) -> String {
     } else if t < 60.0 {
         format!("{t:.2}s")
     } else if t < 3600.0 {
-        format!("{:.0}min {}",((t / 60.0).floor()),convert_time(t % 60.0))
+        format!("{:.0}min {}", ((t / 60.0).floor()), convert_time(t % 60.0))
     } else {
-        format!("{:.0}h {}",((t / 3600.0).floor()),convert_time(t % 3600.0))
+        format!(
+            "{:.0}h {}",
+            ((t / 3600.0).floor()),
+            convert_time(t % 3600.0)
+        )
     }
 }
 
