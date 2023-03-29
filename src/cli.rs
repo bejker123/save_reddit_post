@@ -340,7 +340,7 @@ impl CLI {
                     "<=" => value
                         .parse::<usize>()
                         .map_or(println!("Invalid argument in filter: {filter_}"), |o| {
-                            filter = ElementFilter::Comments(ElementFilterOp::LessEq(o))
+                            filter = ElementFilter::Comments(ElementFilterOp::LessEq(o));
                         }),
                     _ => println!("Invalid argument in filter: {filter_}"),
                 }

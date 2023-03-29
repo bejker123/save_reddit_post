@@ -359,18 +359,18 @@ impl Element {
             let passed = std::time::SystemTime::now()
                 .duration_since(more_start)
                 .unwrap()
-                .as_millis();
+                .as_secs_f64();
 
             //Get estimated time
-            let eta = get_safe!(MORE_ELEMENTS).len() as f64 / (idx_ / passed as f64);
+            let eta = get_safe!(MORE_ELEMENTS).len() as f64 / (idx_ / passed);
 
             //Format the line to be printed
             let mut line = format!(
                 "{idx_} / {} {:.2}% runtime: {} ETA: {}",
                 get_safe!(MORE_ELEMENTS).len(),
                 precent,
-                convert_time(passed as f64 / 1000f64),
-                convert_time((eta - passed as f64) / 1000f64)
+                convert_time(passed),
+                convert_time(eta - passed)
             );
 
             let line_length = line.len();

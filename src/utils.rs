@@ -193,7 +193,7 @@ pub fn sort_elements(
 }
 
 pub fn delete_tmp() -> Result<(),String>{
-    if let Err(_) = std::fs::remove_dir_all("tmp"){
+    if std::fs::remove_dir_all("tmp").is_err(){
         return Err(String::from("Failed to delete temp files directory!"));
     }
     Ok(())

@@ -100,7 +100,7 @@ fn write_to_output(
             "s"
         },
         get_safe!(NUM_COMMENTS),
-        convert_time(start.elapsed().unwrap().as_millis() as f64 / 1000f64)
+        convert_time(start.elapsed().unwrap().as_secs_f64())
     ));
     Ok(())
 }
@@ -208,7 +208,7 @@ async fn main() {
         };
         //Sort elements.
         if elements.len() > 2 {
-            let mut elements_cp = Vec::from([elements.get(0).map_or_else(|| CLI::print_err("Error, invalid elements!"), |o| o.clone())]);
+            let mut elements_cp = Vec::from([elements.get(0).map_or_else(|| CLI::print_err("Error, invalid elements!"), std::clone::Clone::clone)]);
             elements_cp.append(
                 &mut sort_elements(elements[1..elements.len() - 1].to_vec(), cli.sort_style)
                     .unwrap_or_default(),
