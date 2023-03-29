@@ -12,6 +12,8 @@ use crate::{
 
 use rand::prelude::*;
 
+pub const TMP_DIR: &str = "tmp/"; 
+
 #[async_recursion]
 pub async fn request(url: String, retries: Option<usize>) -> Result<reqwest::Response, String> {
     let retries = retries.unwrap_or(0);
@@ -193,7 +195,7 @@ pub fn sort_elements(
 }
 
 pub fn delete_tmp() -> Result<(), String> {
-    if std::fs::remove_dir_all("tmp").is_err() {
+    if std::fs::remove_dir_all(TMP_DIR).is_err() {
         return Err(String::from("Failed to delete temp files directory!"));
     }
     Ok(())
@@ -228,12 +230,12 @@ pub async fn init() -> (CLI, JsonValue) {
     };
 
     if cli.save_tmp_files {
-        let tmp_dir = std::path::Path::new("tmp");
+        let tmp_dir = std::path::Path::new(TMP_DIR);
         if !tmp_dir.exists() {
             std::fs::create_dir(tmp_dir).unwrap();
         }
 
-        match std::fs::write("tmp/raw.json", json_data.pretty(1)) {
+        match std::fs::write(TMP_DIR.to_owned()+"raw.json", json_data.pretty(1)) {
             Ok(_) => {
                 cli.print_info("Writing to JSON file: success");
             }
@@ -242,12 +244,12 @@ pub async fn init() -> (CLI, JsonValue) {
     }
 
     if cli.save_tmp_files {
-        let tmp_dir = std::path::Path::new("tmp");
+        let tmp_dir = std::path::Path::new(TMP_DIR);
         if !tmp_dir.exists() {
             std::fs::create_dir(tmp_dir).unwrap();
         }
 
-        match std::fs::write("tmp/raw.json", json_data.pretty(1)) {
+        match std::fs::write(TMP_DIR.to_owned()+"raw.json", json_data.pretty(1)) {
             Ok(_) => {
                 cli.print_info("Writing to JSON file: success");
             }

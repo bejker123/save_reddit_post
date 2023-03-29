@@ -132,7 +132,8 @@ async fn main() {
 
     let elements = Arc::new(Mutex::new(elements));
 
-    let more_elements_dir = std::path::Path::new("tmp/more_elements");
+    let more_elems_dir_path = &(utils::TMP_DIR.to_owned()+"more_elements");
+    let more_elements_dir = std::path::Path::new(more_elems_dir_path);
     if cli.save_tmp_files && !more_elements_dir.exists() {
         std::fs::create_dir(more_elements_dir).unwrap();
     }
