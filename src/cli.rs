@@ -228,14 +228,21 @@ impl CLI {
         filter_: &String,
         operator: Option<&String>,
         value: Option<&String>,
-    ) -> (u32, ElementFilter) {
+    ) -> Result<(u32, ElementFilter),String> {
         let mut filter = ElementFilter::Default;
         let mut skip_count = 0;
         match filter_.to_lowercase().trim() {
             "ups" | "upvotes" => {
-                let value = value.unwrap();
+                let value = match value{
+                    Some(o)=>o,
+                    None => return Err("Failed to get filter style value".to_string())
+                };
+                let operator = match operator{
+                    Some(o)=>o,
+                    None => return Err("Failed to get filter style operator".to_string())
+                };
                 skip_count += 2;
-                match operator.unwrap().as_str() {
+                match operator.as_str() {
                     ">" => match value.parse::<usize>() {
                         Ok(o) => {
                             filter = ElementFilter::Upvotes(ElementFilterOp::Grater(o));
@@ -288,9 +295,16 @@ impl CLI {
                 }
             }
             "comments" => {
-                let value = value.unwrap();
+                let value = match value{
+                    Some(o)=>o,
+                    None => return Err("Failed to get filter style value".to_owned())
+                };
                 skip_count += 2;
-                match operator.unwrap().as_str() {
+                let operator = match operator{
+                    Some(o)=>o,
+                    None => return Err("Failed to get filter style operator".to_owned())
+                };
+                match operator.as_str() {
                     ">" => match value.parse::<usize>() {
                         Ok(o) => {
                             filter = ElementFilter::Comments(ElementFilterOp::Grater(o));
@@ -337,11 +351,15 @@ impl CLI {
                             filter = ElementFilter::Comments(ElementFilterOp::LessEq(o));
                         },
                     ),
-                    _ => println!("Invalid argument in filter: {filter_}"),
+                    _ => Self::print_info_(format!("Invalid argument in filter: {filter_}")),
                 }
             }
             "edited" => {
-                let operator = operator.unwrap().to_lowercase();
+                let operator = match operator{
+                    Some(o)=>o,
+                    None => return Err("Failed to get filter style operator".to_owned())
+                };
+                let operator = operator.to_lowercase();
                 if operator.trim() == "false" {
                     filter = ElementFilter::Edited(false);
                 } else {
@@ -349,20 +367,28 @@ impl CLI {
                 }
             }
             "author" => {
-                let operator = operator.unwrap().to_lowercase();
+                let value = match value{
+                    Some(o)=>o,
+                    None => return Err("Failed to get filter style value".to_owned())
+                };
+                let operator = match operator{
+                    Some(o)=>o,
+                    None => return Err("Failed to get filter style operator".to_owned())
+                };
+                let operator = operator.to_lowercase();
                 if operator.trim() == "==" {
                     filter =
-                        ElementFilter::Author(ElementFilterOp::EqString(value.unwrap().clone()));
+                        ElementFilter::Author(ElementFilterOp::EqString(value.clone()));
                 } else if operator.trim() == "!=" {
                     filter =
-                        ElementFilter::Author(ElementFilterOp::NotEqString(value.unwrap().clone()));
+                        ElementFilter::Author(ElementFilterOp::NotEqString(value.clone()));
                 } else {
                     println!("Invalid operator in filter: {operator}");
                 }
             }
-            _ => println!("Invalid argument in filter: {filter_}"),
+            _ => Self::print_info_(format!("Invalid argument in filter: {filter_}")),
         };
-        (skip_count, filter)
+        Ok((skip_count, filter))
     }
 
     pub fn new(args: &[String]) -> Self {
@@ -441,11 +467,18 @@ impl CLI {
                             Self::help(true);
                         }
                         skip_count += 1;
-                        let (skip_count_inc, filter_) = Self::parse_filter_style(
-                            args.get(i + 1).unwrap(),
+                        let filter_ = match args.get(i + 1){
+                            Some(o)=>o,
+                            None => Self::print_err("Failed to get --filter filter")
+                        };
+                        let (skip_count_inc, filter_) = match Self::parse_filter_style(
+                            filter_,
                             args.get(i + 2),
                             args.get(i + 3),
-                        );
+                        ){
+                            Ok(o)=>o,
+                            Err(e)=>Self::print_err(e)
+                        };
                         filter = filter_;
                         skip_count += skip_count_inc;
                     }

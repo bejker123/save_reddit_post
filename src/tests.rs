@@ -315,11 +315,11 @@ fn test_cli_parse_filter_style() {
 
     //Edited
     assert_eq!(
-        cli::CLI::parse_filter_style(&String::from("edited"), Some(&String::from("true")), None),
+        cli::CLI::parse_filter_style(&String::from("edited"), Some(&String::from("true")), None).unwrap(),
         (0, cli::ElementFilter::Edited(true))
     );
     assert_eq!(
-        cli::CLI::parse_filter_style(&String::from("edited"), Some(&String::from("false")), None),
+        cli::CLI::parse_filter_style(&String::from("edited"), Some(&String::from("false")), None).unwrap(),
         (0, cli::ElementFilter::Edited(false))
     );
 
@@ -329,7 +329,7 @@ fn test_cli_parse_filter_style() {
             &String::from("author"),
             Some(&String::from("==")),
             Some(&String::from("test"))
-        ),
+        ).unwrap(),
         (
             0,
             cli::ElementFilter::Author(cli::ElementFilterOp::EqString(String::from("test")))
@@ -340,7 +340,7 @@ fn test_cli_parse_filter_style() {
             &String::from("author"),
             Some(&String::from("!=")),
             Some(&String::from("test"))
-        ),
+        ).unwrap(),
         (
             0,
             cli::ElementFilter::Author(cli::ElementFilterOp::NotEqString(String::from("test")))
@@ -353,7 +353,7 @@ fn test_cli_parse_filter_style() {
             &String::from("comments"),
             Some(&String::from("==")),
             Some(&String::from("123"))
-        ),
+        ).unwrap(),
         (
             2,
             cli::ElementFilter::Comments(cli::ElementFilterOp::Eq(123))
@@ -364,7 +364,7 @@ fn test_cli_parse_filter_style() {
             &String::from("comments"),
             Some(&String::from("!=")),
             Some(&String::from("123"))
-        ),
+        ).unwrap(),
         (
             2,
             cli::ElementFilter::Comments(cli::ElementFilterOp::NotEq(123))
@@ -376,7 +376,7 @@ fn test_cli_parse_filter_style() {
             &String::from("comments"),
             Some(&String::from(">")),
             Some(&String::from("123"))
-        ),
+        ).unwrap(),
         (
             2,
             cli::ElementFilter::Comments(cli::ElementFilterOp::Grater(123))
@@ -388,7 +388,7 @@ fn test_cli_parse_filter_style() {
             &String::from("comments"),
             Some(&String::from("<")),
             Some(&String::from("123"))
-        ),
+        ).unwrap(),
         (
             2,
             cli::ElementFilter::Comments(cli::ElementFilterOp::Less(123))
@@ -400,7 +400,7 @@ fn test_cli_parse_filter_style() {
             &String::from("comments"),
             Some(&String::from(">=")),
             Some(&String::from("123"))
-        ),
+        ).unwrap(),
         (
             2,
             cli::ElementFilter::Comments(cli::ElementFilterOp::GraterEq(123))
@@ -412,7 +412,7 @@ fn test_cli_parse_filter_style() {
             &String::from("comments"),
             Some(&String::from("<=")),
             Some(&String::from("123"))
-        ),
+        ).unwrap(),
         (
             2,
             cli::ElementFilter::Comments(cli::ElementFilterOp::LessEq(123))
@@ -425,7 +425,7 @@ fn test_cli_parse_filter_style() {
             &String::from("ups"),
             Some(&String::from("==")),
             Some(&String::from("123"))
-        ),
+        ).unwrap(),
         (
             2,
             cli::ElementFilter::Upvotes(cli::ElementFilterOp::Eq(123))
@@ -436,7 +436,7 @@ fn test_cli_parse_filter_style() {
             &String::from("upvotes"),
             Some(&String::from("!=")),
             Some(&String::from("123"))
-        ),
+        ).unwrap(),
         (
             2,
             cli::ElementFilter::Upvotes(cli::ElementFilterOp::NotEq(123))
@@ -448,7 +448,7 @@ fn test_cli_parse_filter_style() {
             &String::from("ups"),
             Some(&String::from(">")),
             Some(&String::from("123"))
-        ),
+        ).unwrap(),
         (
             2,
             cli::ElementFilter::Upvotes(cli::ElementFilterOp::Grater(123))
@@ -460,7 +460,7 @@ fn test_cli_parse_filter_style() {
             &String::from("upvotes"),
             Some(&String::from("<")),
             Some(&String::from("123"))
-        ),
+        ).unwrap(),
         (
             2,
             cli::ElementFilter::Upvotes(cli::ElementFilterOp::Less(123))
@@ -472,7 +472,7 @@ fn test_cli_parse_filter_style() {
             &String::from("ups"),
             Some(&String::from(">=")),
             Some(&String::from("123"))
-        ),
+        ).unwrap(),
         (
             2,
             cli::ElementFilter::Upvotes(cli::ElementFilterOp::GraterEq(123))
@@ -484,7 +484,7 @@ fn test_cli_parse_filter_style() {
             &String::from("upvotes"),
             Some(&String::from("<=")),
             Some(&String::from("123"))
-        ),
+        ).unwrap(),
         (
             2,
             cli::ElementFilter::Upvotes(cli::ElementFilterOp::LessEq(123))
@@ -497,7 +497,7 @@ fn test_cli_parse_filter_style() {
             &String::from("UpVoteS    "),
             Some(&String::from("<=")),
             Some(&String::from("123"))
-        ),
+        ).unwrap(),
         (
             2,
             cli::ElementFilter::Upvotes(cli::ElementFilterOp::LessEq(123))
@@ -509,29 +509,29 @@ fn test_cli_parse_filter_style() {
             &String::from(" \n\n\n\n\t\rEdItEd\n\n\n\n\n\t\r"),
             Some(&String::from("true")),
             None
-        ),
+        ).unwrap(),
         (0, cli::ElementFilter::Edited(true))
     );
 
     assert_eq!(
-        cli::CLI::parse_filter_style(&String::from("EDITED"), Some(&String::from("TruE")), None),
+        cli::CLI::parse_filter_style(&String::from("EDITED"), Some(&String::from("TruE")), None).unwrap(),
         (0, cli::ElementFilter::Edited(true))
     );
 
     assert_eq!(
-        cli::CLI::parse_filter_style(&String::from("EDITED"), Some(&String::from("FAlSe")), None),
+        cli::CLI::parse_filter_style(&String::from("EDITED"), Some(&String::from("FAlSe")), None).unwrap(),
         (0, cli::ElementFilter::Edited(false))
     );
 
     //Test invalid params
 
     assert_eq!(
-        cli::CLI::parse_filter_style(&String::from("asd"), None, None),
+        cli::CLI::parse_filter_style(&String::from("asd"), None, None).unwrap(),
         (0, cli::ElementFilter::Default)
     );
 
     assert_eq!(
-        cli::CLI::parse_filter_style(&String::from("E dited"), None, None),
+        cli::CLI::parse_filter_style(&String::from("E dited"), None, None).unwrap(),
         (0, cli::ElementFilter::Default)
     );
 }
