@@ -33,7 +33,7 @@ fn test_element() {
         .open(test_file_path)
         .unwrap();
     for elem in elements {
-        match std::io::Write::write_fmt(&mut output, format_args!("{elem:?}")) {
+        match std::io::Write::write_fmt(&mut output, format_args!("{elem}")) {
             Ok(()) => {}
             Err(e) => panic!("Failed to write to output!\nError: {e}"),
         }

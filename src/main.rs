@@ -62,7 +62,7 @@ fn write_to_output(
     //For formatting see element.rs:
     //                   impl std::fmt::Debug for Element
     for elem in elements {
-        ow.content += &format!("{elem:?}");
+        ow.content += &format!("{elem}");
     }
 
     //Write the end:
@@ -92,16 +92,20 @@ fn write_to_output(
     //TODO: fix descrepency!!!
 
     CLI::print_infol(format!(
-        "Successfully got {} element{} NUM_COMMENTS: {}, in {}",
+        "Successfully got {} element{}, in {}",
         get_safe!(ELEMENTS_COUNT),
         if get_safe!(ELEMENTS_COUNT) == 1 {
             ""
         } else {
             "s"
         },
-        get_safe!(NUM_COMMENTS),
         convert_time(start.elapsed().unwrap().as_secs_f64())
     ));
+
+    let diff = get_safe!(NUM_COMMENTS) - get_safe!(ELEMENTS_COUNT);
+    if diff != 0{
+        cli.print_infom(format!("Not all elements've been gotten, difference: {diff}",));
+    }
     Ok(())
 }
 

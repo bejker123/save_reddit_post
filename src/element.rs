@@ -65,12 +65,13 @@ pub struct Element {
 }
 
 impl PartialEq for Element {
+    //We only care about the id in this case since it's guaranteed to be unique by reddit
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
 }
 
-impl std::fmt::Debug for Element {
+impl std::fmt::Display for Element {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.data.is_empty() || self.author.is_empty() {
             return std::fmt::Result::Err(std::fmt::Error::default());
@@ -80,7 +81,7 @@ impl std::fmt::Debug for Element {
                 let children = self
                     .children
                     .iter()
-                    .map(|x| format!("{x:?}"))
+                    .map(|x| format!("{x}"))
                     .collect::<String>();
 
                 let indent_char = " ";
@@ -109,7 +110,7 @@ impl std::fmt::Debug for Element {
                 let children = self
                     .children
                     .iter()
-                    .map(|x| format!("{x:?}"))
+                    .map(|x| format!("{x}"))
                     .collect::<String>();
                 let indent_char = " ";
                 let indent = "\t".to_owned()
@@ -137,8 +138,10 @@ impl std::fmt::Debug for Element {
                 ))
             }
             Format::JSON => {
+                //recursively parse all elements and their children
                 fn parse_json_element(elem: &Element) -> json::object::Object {
                     let mut json_object = json::object::Object::new();
+                    //TODO: probaly best to rewrite this with json::object::Object::from(), and implement serialize
                     json_object.insert("author", JsonValue::String(elem.author.clone()));
                     json_object.insert("data", JsonValue::String(elem.data.clone()));
                     json_object.insert("ups", JsonValue::from(elem.ups));
@@ -147,7 +150,6 @@ impl std::fmt::Debug for Element {
                     json_object.insert("id", JsonValue::String(elem.id.clone()));
                     json_object.insert("kind", JsonValue::String(elem.kind.clone()));
                     json_object.insert("permalink", JsonValue::String(elem.permalink.clone()));
-                    //json_object.insert("post_hint",JsonValue::String(elem.post_hint.clone()));
                     json_object.insert("url", JsonValue::String(elem.url.clone()));
                     json_object.insert("over_18", JsonValue::from(elem.over_18));
                     for child in &elem.children {
@@ -163,13 +165,13 @@ impl std::fmt::Debug for Element {
 }
 
 impl Element {
-    pub fn create(child: &JsonValue, max_elements: usize) -> Result<Self, Empty> {
+    pub fn create(child: &JsonValue, max_elements: usize) -> Option<Self> {
         if get_safe!(ELEMENTS_COUNT) >= max_elements {
-            return Err(Empty {});
+            return None;
         }
         let data = &child["data"];
         if *data == JsonValue::Null {
-            return Err(Empty {});
+            return None;
         }
         //If the element lists more elements(it's kind is more)
         if child["kind"].clone() == "more" {
@@ -180,8 +182,7 @@ impl Element {
                 }
             }
 
-            //Not really an error but it's the best way
-            return Err(Empty {});
+            return None;
         }
 
         let mut total_data = String::new();
@@ -211,34 +212,25 @@ impl Element {
 
         let author = get_data_wrapper!(data, author, String::new());
 
-        if !(total_data.trim() == "[deleted]"
-            && total_data.trim() == "[removed]"
-            && author.trim() == "[deleted]"
-            && author.trim() == "[removed]")
-        {
-            unsafe {
-                ELEMENTS_COUNT += 1;
-            }
-        }
-        Ok(
-            //Use this for clarity
-            #[allow(clippy::redundant_field_names)]
+        unsafe {ELEMENTS_COUNT += 1;}
+        
+        Some(
             Self {
                 author,
+                //The data only stores some of the acctual text data
                 data: total_data,
                 children: Self::get_replies(data, max_elements).map_or_else(|_| Vec::new(), |o| o),
                 ups: get_data_wrapper!(data, ups, "0".to_string())
                     .parse::<usize>()
                     .map_or(0usize, |o| o),
-                //post_hint: get_data_wrapper!(data, "post_hint", String::new()),
                 url: get_data_wrapper!(data, url_overridden_by_dest, String::new()),
                 //a hacky way, but "kind" attribute is higher in the json tree so it would be a pain in the butt to get it that way
                 kind: get_data_wrapper!(data, name, String::new())[0..2].to_owned(),
-                //edited: get_data_wrapper!(data, edited, String::from("false")) == *"true",
                 depth: get_data_wrapper!(data, depth, "0".to_string()),
                 permalink: get_data_wrapper!(data, permalink, String::new()),
                 id: get_data_wrapper!(data, id, String::new()),
                 parent_id: {
+                    //parent_id also stores the kind as in XY_<id>, where XY is the kind 
                     let mut pid = get_data_wrapper!(data, parent_id, String::new());
                     if pid.len() > 3 {
                         pid = pid[3..].to_string();
@@ -249,6 +241,7 @@ impl Element {
                 created: get_data_wrapper!(data, created, usize::MAX.to_string())
                     .parse::<f32>()
                     .map_or(usize::MAX, |o| o as usize),
+                //TODO: change edited to an enum (false/timestamp as a uszie)
                 edited: get_data_wrapper!(data, edited, usize::MAX.to_string())
                     .parse::<f32>()
                     .map_or(usize::MAX, |o| o as usize),
@@ -265,7 +258,7 @@ impl Element {
                     break;
                 }
                 //.If created element isn't empty (Ok) push it.
-                if let Ok(o) = Self::create(child, max_elements) {
+                if let Some(o) = Self::create(child, max_elements) {
                     elements.push(o);
                 }
             }
@@ -280,7 +273,7 @@ impl Element {
                 if get_safe!(ELEMENTS_COUNT) >= max_elements {
                     break;
                 }
-                let Ok(element) = Self::create(child, max_elements) else {continue};
+                let Some(element) = Self::create(child, max_elements) else {continue};
 
                 out.push(element);
             }
@@ -298,7 +291,7 @@ impl Element {
         Err(Empty {})
     }
 
-    //Recursively check every element, and if the first element matches appedn to it
+    //Recursively check every element, and if the first element matches append to it
     fn append_element(x: &mut Vec<Self>, y: &mut Vec<Self>) {
         for element in &mut *y {
             if x.is_empty() {
@@ -329,9 +322,7 @@ impl Element {
         if get_safe!(ELEMENTS_COUNT) >= max_comments {
             return None;
         }
-        //build the url
-        let url = base_url;
-        let Ok(res) = request(url, None).await else{
+        let Ok(res) = request(base_url, None).await else{
             //TODO: add retrying
             todo!()
         };
