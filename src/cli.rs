@@ -16,6 +16,7 @@ pub struct CLI {
     pub save_tmp_files: bool,
     pub verbosity: Verbosity,
     pub req_more_elements: bool,
+    pub delete_tmp: bool,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Default)]
@@ -121,8 +122,12 @@ impl CLI {
             "set the max amount comments to get (min 2, to get the actual post)",
         );
         Self::print_arg(
-            "--save-tmp-files",
+            "--save-tmp",
             "allow saving temp files (raw json data)",
+        );
+        Self::print_arg(
+            "--delete-tmp",
+            "delete temp files folder",
         );
         Self::print_arg("-f/--format", "set the format (not case sensitive)");
 
@@ -375,6 +380,7 @@ impl CLI {
         let mut save_tmp_files = false;
         let mut verbosity = Verbosity::default();
         let mut req_more_elements = true;
+        let mut delete_tmp = true;
 
         if args.len() == 1 {
             Self::help(true);
@@ -448,8 +454,11 @@ impl CLI {
                         filter = filter_;
                         skip_count += skip_count_inc;
                     }
-                    "--save-tmp-files" => {
+                    "--save-tmp" => {
                         save_tmp_files = true;
+                    }
+                    "--delete-tmp" => {
+                        delete_tmp = true;
                     }
                     "-v" | "--verbosity" => {
                         if args.len() < i + 1 {
@@ -498,6 +507,7 @@ impl CLI {
             save_tmp_files,
             verbosity,
             req_more_elements,
+            delete_tmp
         }
     }
 

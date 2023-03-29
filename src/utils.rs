@@ -192,28 +192,30 @@ pub fn sort_elements(
     Ok(elements)
 }
 
+pub fn delete_tmp() -> Result<(),String>{
+    if let Err(_) = std::fs::remove_dir_all("tmp"){
+        return Err(String::from("Failed to delete temp files directory!"));
+    }
+    Ok(())
+}
+
 pub async fn init() -> (CLI, JsonValue) {
     let args: Vec<String> = std::env::args().collect();
     let start = SystemTime::now();
     let cli = crate::cli::CLI::new(&args);
 
-    cli.print_info("Initialising: success.");
-
+    cli.print_info("Initialising CLI: success");
+    cli.print_infom(format!("Requesting content from {}:", cli.url));
     let Ok(res) = request(cli.url.clone(), None).await else{
-        CLI::print_err(format!("Requesting content from {}, fail", cli.url));
+        CLI::print_err("Fail");
     };
 
     let data = if let Ok(o) = res.text().await {
-        cli.print_infom(format!("Requesting content from {}, success", cli.url));
+        cli.print_infom(format!("Success in {}", convert_time(start.elapsed().unwrap().as_secs_f64())));
         o
     } else {
-        CLI::print_err(format!("Requesting content from {}, fail", cli.url));
+        CLI::print_err("Fail");
     };
-
-    cli.print_info(format!(
-        "Downloaded content in {} ms",
-        start.elapsed().unwrap().as_millis()
-    ));
 
     let json_data = if let Ok(o) = json::parse(&data) {
         cli.print_info("Parsing to JSON: success");
@@ -222,7 +224,19 @@ pub async fn init() -> (CLI, JsonValue) {
         CLI::print_err("Parsing to JSON error!");
     };
 
-    let start = SystemTime::now();
+    if cli.save_tmp_files {
+        let tmp_dir = std::path::Path::new("tmp");
+        if !tmp_dir.exists() {
+            std::fs::create_dir(tmp_dir).unwrap();
+        }
+
+        match std::fs::write("tmp/raw.json", json_data.pretty(1)) {
+            Ok(_) => {
+                cli.print_info("Writing to JSON file: success");
+            }
+            Err(e) => CLI::print_err(format!("Writing to JSON file: fail.\nError: {e}")),
+        }
+    }
 
     if cli.save_tmp_files {
         let tmp_dir = std::path::Path::new("tmp");
@@ -237,24 +251,7 @@ pub async fn init() -> (CLI, JsonValue) {
             Err(e) => CLI::print_err(format!("Writing to JSON file: fail.\nError: {e}")),
         }
     }
-    cli.print_info(format!("(in {} ms)", start.elapsed().unwrap().as_millis()));
-
-    let start = SystemTime::now();
-
-    if cli.save_tmp_files {
-        let tmp_dir = std::path::Path::new("tmp");
-        if !tmp_dir.exists() {
-            std::fs::create_dir(tmp_dir).unwrap();
-        }
-
-        match std::fs::write("tmp/raw.json", json_data.pretty(1)) {
-            Ok(_) => {
-                cli.print_info("Writing to JSON file: success");
-            }
-            Err(e) => CLI::print_err(format!("Writing to JSON file: fail.\nError: {e}")),
-        }
-    }
-    cli.print_info(format!("(in {} ms)", start.elapsed().unwrap().as_millis()));
+    cli.print_info(format!("Initialising success, in {}", convert_time(start.elapsed().unwrap().as_secs_f64())));
 
     (cli, json_data)
 }

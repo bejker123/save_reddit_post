@@ -37,13 +37,14 @@ It will go through many changes in the future!
 - [x] Add getting all comments on a post 
 - [x] Add formatting, ex. HTML
 - [x] Add safe wrappers for static mut members 
-- [x] Add more command line options
+- [ ] Add more command line options
   - [x] max comments count 
   - [x] sorting 
   - [x] filtering 
   - [x] cli verbosity options
   - [x] an option to request 'more' elements or not
   - [ ] an option for no color output
+  - [ ] an option for printing timestamps
 - [ ] Perform more tests
 - [ ] Media saving (images, videos)
 

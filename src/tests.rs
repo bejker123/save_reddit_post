@@ -80,6 +80,7 @@ fn test_cli() {
             save_tmp_files: false,
             verbosity: cli::Verbosity::Low,
             req_more_elements: true,
+            delete_tmp: false,
         }
     );
     assert_eq!(
@@ -101,6 +102,7 @@ fn test_cli() {
             save_tmp_files: false,
             verbosity: cli::Verbosity::Low,
             req_more_elements: true,
+            delete_tmp: false,
         }
     );
     assert_eq!(
@@ -116,6 +118,7 @@ fn test_cli() {
             save_tmp_files: false,
             verbosity: cli::Verbosity::Low,
             req_more_elements: true,
+            delete_tmp: false,
         }
     );
 
@@ -137,6 +140,7 @@ fn test_cli() {
             save_tmp_files: true,
             verbosity: cli::Verbosity::Low,
             req_more_elements: true,
+            delete_tmp: false,
         }
     );
 }

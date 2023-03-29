@@ -138,7 +138,6 @@ async fn main() {
         if cli.req_more_elements {
             cli.print_infom("Getting 'more' elements:");
 
-            let mut threads: Vec<tokio::task::JoinHandle<_>> = Vec::new();
             let max_threads = 200;
             let threads_running = Arc::new(Mutex::new(0usize));
             //Get more elements from the 'more' listing
@@ -152,7 +151,7 @@ async fn main() {
                 );
                 let base_url = cli.base_url.clone();
                 let more_elements_dir = more_elements_dir.to_str().unwrap().to_owned();
-                let t = tokio::spawn(async move {
+                tokio::spawn(async move {
                     if get_safe!(ELEMENTS_COUNT) >= cli.max_comments {
                         return;
                     }
@@ -176,7 +175,6 @@ async fn main() {
                     }
                     *threads_running_.lock().unwrap() -= 1;
                 });
-                threads.push(t);
                 while *threads_running.lock().unwrap() >= max_threads {
                     std::thread::sleep(std::time::Duration::from_millis(10));
                 }
@@ -199,10 +197,7 @@ async fn main() {
         "Error, returned 0 elements!"
     );
 
-    let mut elements = match elements.lock() {
-        Ok(e) => e.clone(),
-        Err(_) => CLI::print_err("Failed to lock elements!"),
-    };
+    let mut elements = elements.lock().map_or_else(|_| CLI::print_err("Failed to lock elements!"), |e| e.clone());
 
     //Sort elements (except the first one which is the parent element or the reddit post)
     if elements.len() > 1 {
@@ -213,10 +208,7 @@ async fn main() {
         };
         //Sort elements.
         if elements.len() > 2 {
-            let mut elements_cp = Vec::from([match elements.get(0) {
-                Some(o) => o.clone(),
-                None => CLI::print_err("Error, invalid elements!"),
-            }]);
+            let mut elements_cp = Vec::from([elements.get(0).map_or_else(|| CLI::print_err("Error, invalid elements!"), |o| o.clone())]);
             elements_cp.append(
                 &mut sort_elements(elements[1..elements.len() - 1].to_vec(), cli.sort_style)
                     .unwrap_or_default(),
@@ -227,5 +219,10 @@ async fn main() {
 
     if let Err(e) = write_to_output(&cli, &elements, start) {
         CLI::print_err(format!("Writing to output failed: {e}"));
+    }
+    if cli.delete_tmp{
+        if let Err(e) = utils::delete_tmp(){
+            CLI::print_err(e);
+        }
     }
 }
