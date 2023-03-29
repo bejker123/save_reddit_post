@@ -332,9 +332,11 @@ impl Element {
         //build the url
         let url = base_url;
         let Ok(res) = request(url, None).await else{
-            return None;
+            //TODO: add retrying
+            todo!()
         };
 
+        //TODO: add retrying
         let Ok(data) = res.text().await else { todo!() };
 
         let json_data = match json::parse(&data) {
@@ -348,11 +350,12 @@ impl Element {
         //Parse json data to elements
         let mut e = Self::init(&json_data, max_comments);
 
+        //Code block, bcs rust's mutex is unlocked at the end of a code block (improves performence)
         {
             let idx_ = *idx.lock().unwrap();
             let last_line_length_ = *last_line_length.lock().unwrap();
 
-            //calculate % of progress as a 64bit float 64
+            //calculate % of progress as a 64bit float
             let precent = idx_ / (get_safe!(MORE_ELEMENTS).len() as f64) * 100f64;
 
             //get time passed since start of getting 'more' elements
@@ -383,7 +386,7 @@ impl Element {
             *last_line_length_ = line_length;
 
             //Print the line and flush stdout
-            //If you don;t flush stdout not every line will be printed,
+            //If you don't flush stdout not every line will be printed,
             //Because print! doesn't flush as oppose to println!
             print!("\r{line}");
             std::io::stdout().flush().unwrap();

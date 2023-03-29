@@ -192,8 +192,8 @@ pub fn sort_elements(
     Ok(elements)
 }
 
-pub fn delete_tmp() -> Result<(),String>{
-    if std::fs::remove_dir_all("tmp").is_err(){
+pub fn delete_tmp() -> Result<(), String> {
+    if std::fs::remove_dir_all("tmp").is_err() {
         return Err(String::from("Failed to delete temp files directory!"));
     }
     Ok(())
@@ -211,7 +211,10 @@ pub async fn init() -> (CLI, JsonValue) {
     };
 
     let data = if let Ok(o) = res.text().await {
-        cli.print_infom(format!("Success in {}", convert_time(start.elapsed().unwrap().as_secs_f64())));
+        cli.print_infom(format!(
+            "Success in {}",
+            convert_time(start.elapsed().unwrap().as_secs_f64())
+        ));
         o
     } else {
         CLI::print_err("Fail");
@@ -251,7 +254,10 @@ pub async fn init() -> (CLI, JsonValue) {
             Err(e) => CLI::print_err(format!("Writing to JSON file: fail.\nError: {e}")),
         }
     }
-    cli.print_info(format!("Initialising success, in {}", convert_time(start.elapsed().unwrap().as_secs_f64())));
+    cli.print_info(format!(
+        "Initialising success, in {}",
+        convert_time(start.elapsed().unwrap().as_secs_f64())
+    ));
 
     (cli, json_data)
 }

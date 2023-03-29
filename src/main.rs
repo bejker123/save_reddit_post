@@ -197,7 +197,10 @@ async fn main() {
         "Error, returned 0 elements!"
     );
 
-    let mut elements = elements.lock().map_or_else(|_| CLI::print_err("Failed to lock elements!"), |e| e.clone());
+    let mut elements = elements.lock().map_or_else(
+        |_| CLI::print_err("Failed to lock elements!"),
+        |e| e.clone(),
+    );
 
     //Sort elements (except the first one which is the parent element or the reddit post)
     if elements.len() > 1 {
@@ -208,7 +211,10 @@ async fn main() {
         };
         //Sort elements.
         if elements.len() > 2 {
-            let mut elements_cp = Vec::from([elements.get(0).map_or_else(|| CLI::print_err("Error, invalid elements!"), std::clone::Clone::clone)]);
+            let mut elements_cp = Vec::from([elements.get(0).map_or_else(
+                || CLI::print_err("Error, invalid elements!"),
+                std::clone::Clone::clone,
+            )]);
             elements_cp.append(
                 &mut sort_elements(elements[1..elements.len() - 1].to_vec(), cli.sort_style)
                     .unwrap_or_default(),
@@ -220,8 +226,8 @@ async fn main() {
     if let Err(e) = write_to_output(&cli, &elements, start) {
         CLI::print_err(format!("Writing to output failed: {e}"));
     }
-    if cli.delete_tmp{
-        if let Err(e) = utils::delete_tmp(){
+    if cli.delete_tmp {
+        if let Err(e) = utils::delete_tmp() {
             CLI::print_err(e);
         }
     }

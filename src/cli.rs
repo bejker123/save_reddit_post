@@ -121,14 +121,8 @@ impl CLI {
             "-m/--max",
             "set the max amount comments to get (min 2, to get the actual post)",
         );
-        Self::print_arg(
-            "--save-tmp",
-            "allow saving temp files (raw json data)",
-        );
-        Self::print_arg(
-            "--delete-tmp",
-            "delete temp files folder",
-        );
+        Self::print_arg("--save-tmp", "allow saving temp files (raw json data)");
+        Self::print_arg("--delete-tmp", "delete temp files folder");
         Self::print_arg("-f/--format", "set the format (not case sensitive)");
 
         let padding = '\t';
@@ -337,11 +331,12 @@ impl CLI {
                             println!("Invalid argument in filter: {filter_}");
                         }
                     },
-                    "<=" => value
-                        .parse::<usize>()
-                        .map_or(println!("Invalid argument in filter: {filter_}"), |o| {
+                    "<=" => value.parse::<usize>().map_or(
+                        println!("Invalid argument in filter: {filter_}"),
+                        |o| {
                             filter = ElementFilter::Comments(ElementFilterOp::LessEq(o));
-                        }),
+                        },
+                    ),
                     _ => println!("Invalid argument in filter: {filter_}"),
                 }
             }
@@ -507,7 +502,7 @@ impl CLI {
             save_tmp_files,
             verbosity,
             req_more_elements,
-            delete_tmp
+            delete_tmp,
         }
     }
 
