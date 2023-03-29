@@ -41,8 +41,8 @@ It will go through many changes in the future!
   - [x] max comments count 
   - [x] sorting 
   - [x] filtering 
-  - [x] Add more cli verbosity options
-  - [x] Add an option to request 'more' elements or not
+  - [x] cli verbosity options
+  - [x] an option to request 'more' elements or not
 - [ ] Perform more tests
 - [ ] Media saving (images, videos)
 
