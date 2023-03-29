@@ -361,7 +361,7 @@ impl CLI {
         (skip_count, filter)
     }
 
-    pub fn new(args: &[String]) -> CLI {
+    pub fn new(args: &[String]) -> Self {
         let mut url = String::new();
         let mut save_to_file = true;
         let mut save_path = String::from("output.txt");

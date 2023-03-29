@@ -230,7 +230,7 @@ impl Element {
             Self {
                 author,
                 data: total_data,
-                children: Element::get_replies(data, max_elements).map_or_else(|_| Vec::new(), |o| o),
+                children: Self::get_replies(data, max_elements).map_or_else(|_| Vec::new(), |o| o),
                 ups :get_data_wrapper!(data, ups, "0".to_string()).parse::<usize>().map_or(0usize, |o| o),
                 //post_hint: get_data_wrapper!(data, "post_hint", String::new()),
                 url: get_data_wrapper!(data, url_overridden_by_dest, String::new()),
@@ -256,7 +256,7 @@ impl Element {
     }
 
     pub fn init(data: &JsonValue, max_elements: usize) -> Vec<Self> {
-        let mut elements = Vec::<Element>::new();
+        let mut elements = Vec::<Self>::new();
 
         for member in data.members() {
             for child in member["data"]["children"].members() {
@@ -264,7 +264,7 @@ impl Element {
                     break;
                 }
                 //.If created element isn't empty (Ok) push it.
-                if let Ok(o) = Element::create(child, max_elements) {
+                if let Ok(o) = Self::create(child, max_elements) {
                     elements.push(o);
                 }
             }
@@ -273,13 +273,13 @@ impl Element {
     }
 
     fn get_replies(element: &JsonValue, max_elements: usize) -> Result<Vec<Self>, Empty> {
-        let mut out = Vec::<Element>::new();
+        let mut out = Vec::<Self>::new();
         if element["replies"] != JsonValue::Null {
             for child in element["replies"]["data"]["children"].members() {
                 if get_safe!(ELEMENTS_COUNT) >= max_elements {
                     break;
                 }
-                let Ok(element) = Element::create(child, max_elements) else {continue};
+                let Ok(element) = Self::create(child, max_elements) else {continue};
 
                 out.push(element);
             }
@@ -345,7 +345,7 @@ impl Element {
         };
 
         //Parse json data to elements
-        let mut e = Element::init(&json_data, max_comments);
+        let mut e = Self::init(&json_data, max_comments);
 
         {
             let idx_ = *idx.lock().unwrap();

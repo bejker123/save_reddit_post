@@ -23,7 +23,7 @@ fn test_element() {
     let data = include_str!("element_test_data1.json");
     let test_file_path = "test-output.tmp";
 
-    let json_data = json::parse(&data).unwrap();
+    let json_data = json::parse(data).unwrap();
 
     let elements = crate::element::Element::init(&json_data, USIZE_MAX);
     let mut output = std::fs::OpenOptions::new()
@@ -42,7 +42,7 @@ fn test_element() {
         std::fs::read_to_string(test_file_path).unwrap(),
         include_str!("element_test_output1.txt")
             .to_owned()
-            .replace("\r", "")
+            .replace('\r', "")
     );
     std::fs::remove_file(test_file_path).unwrap();
 }
@@ -51,24 +51,22 @@ fn test_element() {
 fn test_cli() {
     //This test is incomplete!
 
-    CLI::new(&vec![st("test-bin"), st("-h")]);
-    let cli1 = CLI::new(&vec![st("test-bin"), st("https://test-url.com/")]);
+    CLI::new(&[st("test-bin"), st("-h")]);
+    let cli1 = CLI::new(&[st("test-bin"), st("https://test-url.com/")]);
     assert_eq!(
         (cli1.url, cli1.base_url),
         (st("https://test-url.com.json"), st("https://test-url.com/"))
     );
-    let cli2 = CLI::new(&vec![st("test-bin"), st("https://test-url.com/")]);
+    let cli2 = CLI::new(&[st("test-bin"), st("https://test-url.com/")]);
     assert_eq!(
         (cli2.url, cli2.base_url),
         (st("https://test-url.com.json"), st("https://test-url.com/"))
     );
     assert_eq!(
-        CLI::new(&vec![
-            st("test-bin"),
+        CLI::new(&[st("test-bin"),
             st("-s"),
             st("test-path.txt"),
-            st("https://test-url.com/")
-        ]),
+            st("https://test-url.com/")]),
         CLI {
             url: st("https://test-url.com.json"),
             base_url: st("https://test-url.com/"),
@@ -83,13 +81,11 @@ fn test_cli() {
         }
     );
     assert_eq!(
-        CLI::new(&vec![
-            st("test-bin"),
+        CLI::new(&[st("test-bin"),
             st("-o"),
             st("-s"),
             st("test-path.txt"),
-            st("https://test-url.com/")
-        ]),
+            st("https://test-url.com/")]),
         CLI {
             url: st("https://test-url.com.json"),
             base_url: st("https://test-url.com/"),
@@ -104,7 +100,7 @@ fn test_cli() {
         }
     );
     assert_eq!(
-        CLI::new(&vec![st("test-bin"), st("-o"), st("https://test-url.com/")]),
+        CLI::new(&[st("test-bin"), st("-o"), st("https://test-url.com/")]),
         CLI {
             url: st("https://test-url.com.json"),
             base_url: st("https://test-url.com/"),
@@ -120,12 +116,10 @@ fn test_cli() {
     );
 
     assert_eq!(
-        CLI::new(&vec![
-            st("test-bin"),
+        CLI::new(&[st("test-bin"),
             st("-o"),
             st("--save-tmp-files"),
-            st("https://test-url.com/")
-        ]),
+            st("https://test-url.com/")]),
         CLI {
             url: st("https://test-url.com.json"),
             base_url: st("https://test-url.com/"),
