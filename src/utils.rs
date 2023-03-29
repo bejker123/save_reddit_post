@@ -192,7 +192,7 @@ pub fn sort_elements(
     Ok(elements)
 }
 
-pub async fn init() -> (CLI,JsonValue){
+pub async fn init() -> (CLI, JsonValue) {
     let args: Vec<String> = std::env::args().collect();
     let start = SystemTime::now();
     let cli = crate::cli::CLI::new(&args);
@@ -256,5 +256,5 @@ pub async fn init() -> (CLI,JsonValue){
     }
     cli.print_info(format!("(in {} ms)", start.elapsed().unwrap().as_millis()));
 
-    (cli,json_data)
+    (cli, json_data)
 }

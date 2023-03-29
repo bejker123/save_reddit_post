@@ -3,7 +3,9 @@ extern crate tokio;
 #[macro_use]
 mod element;
 use cli::CLI;
-use element::{ELEMENTS_COUNT, Element, Format, FORMAT, MORE_ELEMENTS, MORE_ELEMENTS_COUNT, NUM_COMMENTS};
+use element::{
+    Element, Format, ELEMENTS_COUNT, FORMAT, MORE_ELEMENTS, MORE_ELEMENTS_COUNT, NUM_COMMENTS,
+};
 
 mod cli;
 
@@ -105,7 +107,7 @@ fn write_to_output(
 
 #[tokio::main]
 async fn main() {
-    let (cli,json_data) = utils::init().await;
+    let (cli, json_data) = utils::init().await;
 
     let start = std::time::SystemTime::now();
 
@@ -197,9 +199,9 @@ async fn main() {
         "Error, returned 0 elements!"
     );
 
-    let mut elements = match elements.lock(){
+    let mut elements = match elements.lock() {
         Ok(e) => e.clone(),
-        Err(_)=> CLI::print_err("Failed to lock elements!")
+        Err(_) => CLI::print_err("Failed to lock elements!"),
     };
 
     //Sort elements (except the first one which is the parent element or the reddit post)

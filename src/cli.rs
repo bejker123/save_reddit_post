@@ -332,7 +332,11 @@ impl CLI {
                             println!("Invalid argument in filter: {filter_}");
                         }
                     },
-                    "<=" => value.parse::<usize>().map_or(println!("Invalid argument in filter: {filter_}"), |o| filter = ElementFilter::Comments(ElementFilterOp::LessEq(o))),
+                    "<=" => value
+                        .parse::<usize>()
+                        .map_or(println!("Invalid argument in filter: {filter_}"), |o| {
+                            filter = ElementFilter::Comments(ElementFilterOp::LessEq(o))
+                        }),
                     _ => println!("Invalid argument in filter: {filter_}"),
                 }
             }

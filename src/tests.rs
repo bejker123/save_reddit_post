@@ -63,10 +63,12 @@ fn test_cli() {
         (st("https://test-url.com.json"), st("https://test-url.com/"))
     );
     assert_eq!(
-        CLI::new(&[st("test-bin"),
+        CLI::new(&[
+            st("test-bin"),
             st("-s"),
             st("test-path.txt"),
-            st("https://test-url.com/")]),
+            st("https://test-url.com/")
+        ]),
         CLI {
             url: st("https://test-url.com.json"),
             base_url: st("https://test-url.com/"),
@@ -81,11 +83,13 @@ fn test_cli() {
         }
     );
     assert_eq!(
-        CLI::new(&[st("test-bin"),
+        CLI::new(&[
+            st("test-bin"),
             st("-o"),
             st("-s"),
             st("test-path.txt"),
-            st("https://test-url.com/")]),
+            st("https://test-url.com/")
+        ]),
         CLI {
             url: st("https://test-url.com.json"),
             base_url: st("https://test-url.com/"),
@@ -116,10 +120,12 @@ fn test_cli() {
     );
 
     assert_eq!(
-        CLI::new(&[st("test-bin"),
+        CLI::new(&[
+            st("test-bin"),
             st("-o"),
             st("--save-tmp-files"),
-            st("https://test-url.com/")]),
+            st("https://test-url.com/")
+        ]),
         CLI {
             url: st("https://test-url.com.json"),
             base_url: st("https://test-url.com/"),

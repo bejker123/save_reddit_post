@@ -173,9 +173,7 @@ impl Element {
         }
         //If the element lists more elements(it's kind is more)
         if child["kind"].clone() == "more" {
-            unsafe {
-                MORE_ELEMENTS_COUNT += data["count"].as_usize().map_or(0, |o| o)
-            }
+            unsafe { MORE_ELEMENTS_COUNT += data["count"].as_usize().map_or(0, |o| o) }
             for more_element in data["children"].members() {
                 unsafe {
                     MORE_ELEMENTS.push(more_element.to_string());
@@ -199,9 +197,7 @@ impl Element {
 
         let n_comments = get_data_wrapper!(data, num_comments, String::new());
         if !n_comments.is_empty() {
-            unsafe {
-                NUM_COMMENTS = n_comments.parse::<usize>().map_or(0,|o| o)
-            }
+            unsafe { NUM_COMMENTS = n_comments.parse::<usize>().map_or(0, |o| o) }
         }
 
         let title_ = get_data_wrapper!(data, title, String::new());
@@ -231,7 +227,9 @@ impl Element {
                 author,
                 data: total_data,
                 children: Self::get_replies(data, max_elements).map_or_else(|_| Vec::new(), |o| o),
-                ups :get_data_wrapper!(data, ups, "0".to_string()).parse::<usize>().map_or(0usize, |o| o),
+                ups: get_data_wrapper!(data, ups, "0".to_string())
+                    .parse::<usize>()
+                    .map_or(0usize, |o| o),
                 //post_hint: get_data_wrapper!(data, "post_hint", String::new()),
                 url: get_data_wrapper!(data, url_overridden_by_dest, String::new()),
                 //a hacky way, but "kind" attribute is higher in the json tree so it would be a pain in the butt to get it that way
@@ -249,8 +247,11 @@ impl Element {
                 },
                 over_18: get_data_wrapper!(data, over_18, String::from("false")) == *"true",
                 created: get_data_wrapper!(data, created, usize::MAX.to_string())
-                .parse::<f32>().map_or(usize::MAX, |o| o as usize),
-                edited: get_data_wrapper!(data, edited, usize::MAX.to_string()).parse::<f32>().map_or(usize::MAX, |o| o as usize),
+                    .parse::<f32>()
+                    .map_or(usize::MAX, |o| o as usize),
+                edited: get_data_wrapper!(data, edited, usize::MAX.to_string())
+                    .parse::<f32>()
+                    .map_or(usize::MAX, |o| o as usize),
             },
         )
     }
