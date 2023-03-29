@@ -43,7 +43,8 @@ fn test_element() {
         include_str!("element_test_output1.txt")
             .to_owned()
             .replace("\r", "")
-    )
+    );
+    std::fs::remove_file(test_file_path);
 }
 
 #[test]
@@ -528,9 +529,9 @@ fn test_cli_parse_filter_style() {
 }
 
 #[test]
-fn test_urils_convert_time() {
-    assert_eq!(utils::convert_time(-100.0), String::new());
-    assert_eq!(utils::convert_time(0.0), String::new());
+fn test_utils_convert_time() {
+    assert_eq!(utils::convert_time(-100.0), String::from("<0.00s"));
+    assert_eq!(utils::convert_time(0.0), String::from("<0.00s"));
     assert_eq!(utils::convert_time(0.99), String::from("0.99s"));
     assert_eq!(utils::convert_time(0.999), String::from("1.00s"));
     assert_eq!(utils::convert_time(10.0), String::from("10.00s"));

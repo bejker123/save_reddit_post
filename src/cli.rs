@@ -70,18 +70,18 @@ impl CLI {
 
     pub fn print_info<T: Display>(&self,info: T){
         if self.verbosity == Verbosity::High{
-            Self::print_info_(&self, info)
+            Self::print_info_(self, info);
         }
     }
 
     pub fn print_infom<T: Display>(&self,info: T){
         if self.verbosity == Verbosity::High || self.verbosity == Verbosity::Moderate{
-            Self::print_info_(&self, info)
+            Self::print_info_(self, info);
         }
     }
 
     pub fn print_infol<T: Display>(&self,info: T){
-        Self::print_info_(&self, info)
+        Self::print_info_(self, info);
     }
 
     fn print_arg(arg: &str, desc: &str) {

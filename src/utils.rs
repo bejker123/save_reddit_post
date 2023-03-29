@@ -29,7 +29,7 @@ pub async fn request(url: String, retries: Option<usize>) -> Result<reqwest::Res
 // Xh Ymin Zs
 pub fn convert_time(t: f64) -> String {
     if t <= 0.0 {
-        String::new()
+        String::from("<0.00s")
     } else if t < 60.0 {
         format!("{t:.2}s")
     } else if t < 3600.0 {

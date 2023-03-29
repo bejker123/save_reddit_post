@@ -77,10 +77,10 @@ fn write_to_output(
 
     match ow.write() {
         Ok(_) => {
-            if !cli.save_to_file {
-                cli.print_info("Writing to stdout: success");
-            }else{
+            if cli.save_to_file {
                 cli.print_info("Success");
+            }else{
+                cli.print_info("Writing to stdout: success");
             }
         }
         Err(e) => return Err(format!("ow.write() error:\n{e}")),
@@ -111,9 +111,7 @@ async fn main() {
 
     cli.print_info("Initialising: success.");
     
-    let res = if let Ok(res) = request(cli.url.clone(), None).await{
-        res
-    }else{
+    let Ok(res) = request(cli.url.clone(), None).await else{
         cli.print_err(format!("Requesting content from {}, fail", cli.url));
     };
 
@@ -128,7 +126,6 @@ async fn main() {
         "Downloaded content in {} ms",
         start.elapsed().unwrap().as_millis()
     ));
-
 
     let json_data = if let Ok(o) = json::parse(&data) {
         cli.print_info("Parsing to JSON: success");
