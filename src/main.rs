@@ -104,7 +104,7 @@ fn write_to_output(
 
     let diff = get_safe!(NUM_COMMENTS) - get_safe!(ELEMENTS_COUNT);
     if diff != 0{
-        cli.print_infom(format!("Not all elements've been gotten, difference: {diff}",));
+        cli.print_infom(format!("Not all elements've been gotten, difference: {diff}"));
     }
     Ok(())
 }
@@ -143,7 +143,8 @@ async fn main() {
         if cli.req_more_elements {
             cli.print_infom("Getting 'more' elements:");
 
-            let max_threads = 200;
+            let max_threads = std::thread::available_parallelism().unwrap().get();
+            cli.print_info(format!("Running {max_threads} threads"));
             let threads_running = Arc::new(Mutex::new(0usize));
             //Get more elements from the 'more' listing
             for more_element in &get_safe!(MORE_ELEMENTS) {
@@ -162,6 +163,7 @@ async fn main() {
                     }
                     *threads_running_.lock().unwrap() += 1;
                     if let Some(o) = Element::get_more_element(
+                        &cli.verbosity,
                         x.clone(),
                         idx,
                         more_start,

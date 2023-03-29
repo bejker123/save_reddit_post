@@ -10,7 +10,7 @@ use std::{
 
 use json::JsonValue;
 
-use crate::{convert_time, request};
+use crate::{convert_time, request, cli::Verbosity};
 use std::io::Write;
 
 #[derive(Debug)]
@@ -312,6 +312,7 @@ impl Element {
     }
 
     pub async fn get_more_element(
+        verbosity: &Verbosity,
         base_url: String,
         idx: Arc<Mutex<f64>>,
         more_start: SystemTime,
@@ -322,7 +323,7 @@ impl Element {
         if get_safe!(ELEMENTS_COUNT) >= max_comments {
             return None;
         }
-        let Ok(res) = request(base_url, None).await else{
+        let Ok(res) = request(base_url.clone(), None).await else{
             //TODO: add retrying
             todo!()
         };
@@ -379,8 +380,10 @@ impl Element {
             //Print the line and flush stdout
             //If you don't flush stdout not every line will be printed,
             //Because print! doesn't flush as oppose to println!
-            print!("\r{line}");
-            std::io::stdout().flush().unwrap();
+            if *verbosity == Verbosity::High || *verbosity == Verbosity::Moderate{
+                print!("\r{line}");
+                std::io::stdout().flush().unwrap();
+            }
             let mut idx_ = idx.lock().unwrap();
             *idx_ += 1.0;
         }
