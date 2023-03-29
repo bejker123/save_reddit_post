@@ -77,6 +77,7 @@ fn test_cli() {
             filter: CLI_ELEMENT_FILTER_DEF,
             sort_style: CLI_ELEMENT_SORT_DEF,
             save_tmp_files: false,
+            verbosity: cli::Verbosity::Low,
         }
     );
     assert_eq!(
@@ -96,6 +97,7 @@ fn test_cli() {
             filter: CLI_ELEMENT_FILTER_DEF,
             sort_style: CLI_ELEMENT_SORT_DEF,
             save_tmp_files: false,
+            verbosity: cli::Verbosity::Low,
         }
     );
     assert_eq!(
@@ -109,6 +111,7 @@ fn test_cli() {
             filter: CLI_ELEMENT_FILTER_DEF,
             sort_style: CLI_ELEMENT_SORT_DEF,
             save_tmp_files: false,
+            verbosity: cli::Verbosity::Low,
         }
     );
 
@@ -128,6 +131,7 @@ fn test_cli() {
             filter: CLI_ELEMENT_FILTER_DEF,
             sort_style: CLI_ELEMENT_SORT_DEF,
             save_tmp_files: true,
+            verbosity: cli::Verbosity::Low,
         }
     );
 }

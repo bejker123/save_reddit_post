@@ -352,7 +352,11 @@ impl Element {
         }
         //build the url
         let url = base_url;
-        let res = request(url, None).await;
+        let res = if let Ok(res) = request(url, None).await{
+            res
+        }else{
+            return None;
+        };
 
         let Ok(data) = res.text().await else { todo!() };
 

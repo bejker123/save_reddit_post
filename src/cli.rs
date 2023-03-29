@@ -1,3 +1,5 @@
+use std::{fmt::Display, process::exit};
+
 use console::style;
 
 //Allow this, bcs when running tests compiler throws a dead code warning which is not true.
@@ -12,6 +14,15 @@ pub struct CLI {
     pub sort_style: ElementSort,
     pub filter: ElementFilter,
     pub save_tmp_files: bool,
+    pub verbosity: Verbosity,
+}
+
+#[derive(Eq, PartialEq, Debug, Clone, Copy,Default)]
+pub enum Verbosity {
+    High,
+    Moderate,
+    #[default]
+    Low
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
@@ -48,6 +59,31 @@ pub enum ElementFilter {
 }
 
 impl CLI {
+    pub fn print_err<T: Display>(&self,err: T) -> !{
+        println!("[{}::{}] {}",style("CLI").bold(),style("ERROR").bold().red(), style(err).red().bold());
+        exit(0);
+    }
+
+    fn print_info_<T: Display>(&self,info: T){
+        println!("[{}::{}] {}",style("CLI").bold(),style("INFO").bold().blue(), style(info).blue());
+    }
+
+    pub fn print_info<T: Display>(&self,info: T){
+        if self.verbosity == Verbosity::High{
+            Self::print_info_(&self, info)
+        }
+    }
+
+    pub fn print_infom<T: Display>(&self,info: T){
+        if self.verbosity == Verbosity::High || self.verbosity == Verbosity::Moderate{
+            Self::print_info_(&self, info)
+        }
+    }
+
+    pub fn print_infol<T: Display>(&self,info: T){
+        Self::print_info_(&self, info)
+    }
+
     fn print_arg(arg: &str, desc: &str) {
         println!(" {} {}", style(arg).yellow().bold(), style(desc).blue());
     }
@@ -65,6 +101,7 @@ impl CLI {
         Self::print_arg("-h/--help", "display this help");
         Self::print_arg("-s/--save", "specify save path(output.tmp by default)");
         Self::print_arg("-o/--output", "don't save to file just output to stdout");
+        Self::print_arg("-v/--verbosity", "set cli verbosity (high/h, moderate/m, low/l)");
         Self::print_arg(
             "-m/--max",
             "set the max amount comments to get (min 2, to get the actual post)",
@@ -112,14 +149,8 @@ impl CLI {
             "{padding}{}",
             style("comments > >= == < <= != [nr]").yellow()
         );
-        println!(
-            "{padding}{}",
-            style("edited [bool]").yellow()
-        );
-        println!(
-            "{padding}{}",
-            style("author == != [value]").yellow()
-        );
+        println!("{padding}{}", style("edited [bool]").yellow());
+        println!("{padding}{}", style("author == != [value]").yellow());
 
         if invalid_usage {
             println!("{}", style("Invalid usage!").bold().red());
@@ -331,6 +362,7 @@ impl CLI {
         let mut sort_style = ElementSort::Default;
         let mut filter = ElementFilter::Default; //ElementFilter::Comments(ElementFilterOp::Grater(1));//ElementFilter::Edited(false);//ElementFilter::Author(ElementFilterOp::NotEqString(String::from("funambula")));
         let mut save_tmp_files = false;
+        let mut verbosity = Verbosity::default();
 
         if args.len() == 1 {
             Self::help(true);
@@ -407,6 +439,27 @@ impl CLI {
                     "--save-tmp-files" => {
                         save_tmp_files = true;
                     }
+                    "-v" | "--verbosity" => {
+                        if args.len() < i + 1 {
+                            Self::help(true);
+                        }
+                        skip_count += 1;
+                        let v = args[i + 1].clone().to_lowercase();
+                        match v.as_str(){
+                            "h" | "high" => {
+                                verbosity = Verbosity::High;
+                            }
+                            "m" | "moderate" => {
+                                verbosity = Verbosity::Moderate;
+                            }
+                            "l" | "low" => {
+                                verbosity = Verbosity::Low;
+                            }
+                            _=>{
+                                println!("Invalid verbosity {v}");
+                            }
+                        }
+                    }
                     _ => {
                         println!("Invalid argument: {}", args[i]);
                     }
@@ -428,12 +481,13 @@ impl CLI {
             sort_style,
             filter,
             save_tmp_files,
+            verbosity,
         }
     }
 
     pub fn parse_url(mut url: String) -> (String, String) {
         if !url.contains("reddit.com/") {
-            println!("Invalid url: {url}");
+            println!("{}", style(format!("Invalid url: {url}")).red().bold());
             Self::help(true);
         }
 
@@ -466,7 +520,7 @@ impl CLI {
 
         //If url doens't contain at least 3 / it's assumed to be invalid
         if url.matches('/').count() < 3 {
-            println!("Invalid url: {url}");
+            println!("{}", style(format!("Invalid url: {url}")).red().bold());
             Self::help(true);
         }
 

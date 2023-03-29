@@ -15,7 +15,7 @@ use utils::{convert_time, filter_elements, request, sort_elements};
 
 mod tests;
 
-use std::{io::Write, process::exit, sync::Arc, sync::Mutex, time::SystemTime};
+use std::{io::Write, sync::Arc, sync::Mutex, time::SystemTime};
 
 fn write_to_output(
     cli: &cli::CLI,
@@ -37,7 +37,7 @@ fn write_to_output(
             Ok(o) => Box::new(o),
             Err(e) => return Err(format!("Failed to open file with error: {e}")),
         };
-        print!("Writing to {}: ", cli.save_path);
+            cli.print_info(format!("Writing to {}: ", cli.save_path));
     }
     let mut ow = OutputWriter::new();
     ow = ow.set_output(output);
@@ -78,30 +78,28 @@ fn write_to_output(
     match ow.write() {
         Ok(_) => {
             if !cli.save_to_file {
-                print!("Writing to stdout: ");
+                cli.print_info("Writing to stdout: success");
+            }else{
+                cli.print_info("Success");
             }
-            println!("success");
         }
         Err(e) => return Err(format!("ow.write() error:\n{e}")),
     }
 
     //Print last bit of debug data
     //TODO: fix descrepency!!!
-    print!(
-        "Successfully got {} element{} NUM_COMMENTS: {}",
+
+    cli.print_infol(format!(
+        "Successfully got {} element{} NUM_COMMENTS: {}, in {}",
         get_safe!(ELEMENTS_COUNT),
         if get_safe!(ELEMENTS_COUNT) == 1 {
             ""
         } else {
             "s"
         },
-        get_safe!(NUM_COMMENTS)
-    );
-
-    println!(
-        ", in {}",
+        get_safe!(NUM_COMMENTS),
         convert_time(start.elapsed().unwrap().as_millis() as f64 / 1000f64)
-    );
+    ));
     Ok(())
 }
 
@@ -111,32 +109,32 @@ async fn main() {
     let start = SystemTime::now();
     let cli = CLI::new(&args);
 
-    println!("Initialising: success.");
-
-    print!("Requesting content from {}\nStatus: ", cli.url);
-    let res = request(cli.url.clone(), None).await;
-
-    let data = if let Ok(o) = res.text().await {
-        println!("success.");
-        o
-    } else {
-        println!("fail.");
-        exit(1);
+    cli.print_info("Initialising: success.");
+    
+    let res = if let Ok(res) = request(cli.url.clone(), None).await{
+        res
+    }else{
+        cli.print_err(format!("Requesting content from {}, fail", cli.url));
     };
 
-    println!(
-        "Downloaded content in {} ms",
-        start.elapsed().unwrap().as_millis()
-    );
-
-    print!("Parsing to JSON: ");
-
-    let json_data = if let Ok(o) = json::parse(&data) {
-        print!("success ");
+    let data = if let Ok(o) = res.text().await {
+        cli.print_infom(format!("Requesting content from {}, success", cli.url));
         o
     } else {
-        print!("fail");
-        exit(1);
+        cli.print_err(format!("Requesting content from {}, fail", cli.url));
+    };
+
+    cli.print_info(format!(
+        "Downloaded content in {} ms",
+        start.elapsed().unwrap().as_millis()
+    ));
+
+
+    let json_data = if let Ok(o) = json::parse(&data) {
+        cli.print_info("Parsing to JSON: success");
+        o
+    } else {
+        cli.print_err("Parsing to JSON error!");
     };
 
     let start = SystemTime::now();
@@ -146,26 +144,25 @@ async fn main() {
         if !tmp_dir.exists() {
             std::fs::create_dir(tmp_dir).unwrap();
         }
-        print!("Writing to JSON file: ");
+
         match std::fs::write("tmp/raw.json", json_data.pretty(1)) {
             Ok(_) => {
-                print!("success ");
+                cli.print_info("Writing to JSON file: success");
             }
-            Err(e) => panic!("fail.\nError: {e}"),
+            Err(e) => cli.print_err(format!("Writing to JSON file: fail.\nError: {e}")),
         }
     }
-    println!("(in {} ms)", start.elapsed().unwrap().as_millis());
+    cli.print_info(format!("(in {} ms)", start.elapsed().unwrap().as_millis()));
 
-    print!("Parsing to elements: ");
 
     let start = std::time::SystemTime::now();
 
     let elements = Element::init(&json_data, cli.max_comments);
 
     if elements.is_empty() {
-        println!("fail.");
+        cli.print_err("Parsing to elements: fail.");    
     } else {
-        println!("success.");
+        cli.print_info("Parsing to elements: success.");    
     }
 
     let more_start = std::time::SystemTime::now();
@@ -184,7 +181,7 @@ async fn main() {
 
     //'more' elements
     if get_safe!(MORE_ELEMENTS_COUNT) > 0 && get_safe!(ELEMENTS_COUNT) < cli.max_comments {
-        println!("Getting 'more' elements:");
+        cli.print_infom("Getting 'more' elements:");
 
         let mut threads: Vec<tokio::task::JoinHandle<_>> = Vec::new();
         let max_threads = 200;
@@ -251,13 +248,13 @@ async fn main() {
         //Filter elements.
         elements = match filter_elements(elements, cli.filter.clone(), vec![]) {
             Some(o) => o.0,
-            None => panic!("Error, no elements, after filtering."),
+            None => cli.print_err("Error, no elements, after filtering."),
         };
         //Sort elements.
         if elements.len() > 2 {
             let mut elements_cp = Vec::from([match elements.get(0) {
                 Some(o) => o.clone(),
-                None => panic!("Error, invalid elements!"),
+                None => cli.print_err("Error, invalid elements!"),
             }]);
             elements_cp.append(
                 &mut sort_elements(elements[1..elements.len() - 1].to_vec(), cli.sort_style)
@@ -268,6 +265,6 @@ async fn main() {
     }
 
     if let Err(e) = write_to_output(&cli, &elements, start) {
-        println!("Writing to output failed: {e}");
+        cli.print_err(format!("Writing to output failed: {e}"));
     }
 }

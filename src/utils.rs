@@ -10,14 +10,14 @@ use crate::{
 use rand::prelude::*;
 
 #[async_recursion]
-pub async fn request(url: String, retries: Option<usize>) -> reqwest::Response {
+pub async fn request(url: String, retries: Option<usize>) -> Result<reqwest::Response,String> {
     let retries = retries.unwrap_or(0);
     let client = reqwest::Client::new();
     match client.get(url.clone()).send().await {
-        Ok(o) => o,
+        Ok(o) => Ok(o),
         Err(e) => {
             if retries >= 3 {
-                panic!("Max retries exeeded, error: {e}");
+                Err(format!("Max retries exeeded, error: {e}"))
             } else {
                 request(url, Some(retries + 1)).await
             }
