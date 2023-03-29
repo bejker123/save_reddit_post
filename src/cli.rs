@@ -496,10 +496,7 @@ impl CLI {
                     }
                 }
             }
-            match args.last() {
-                Some(o) => url = o.to_string(),
-                _ => panic!("Failed to get last of args!"),
-            }
+            args.last().map_or_else(|| panic!("Failed to get last of args!"), |o| url = o.to_string())
         }
 
         let (url, base_url) = Self::parse_url(url);

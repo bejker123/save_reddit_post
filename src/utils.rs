@@ -212,22 +212,22 @@ pub async fn init() -> (CLI, JsonValue) {
         CLI::print_err("Fail");
     };
 
-    let data = if let Ok(o) = res.text().await {
+    let data = (res.text().await).map_or_else(|_|{
+        CLI::print_err("Fail");
+    },|o| {
         cli.print_infom(format!(
             "Success in {}",
             convert_time(start.elapsed().unwrap().as_secs_f64())
         ));
         o
-    } else {
-        CLI::print_err("Fail");
-    };
+    });
 
-    let json_data = if let Ok(o) = json::parse(&data) {
+    let json_data = json::parse(&data).map_or_else(|_|{
+        CLI::print_err("Parsing to JSON error!");
+    }, |o|{
         cli.print_info("Parsing to JSON: success");
         o
-    } else {
-        CLI::print_err("Parsing to JSON error!");
-    };
+    });
 
     if cli.save_tmp_files {
         let tmp_dir = std::path::Path::new(TMP_DIR);
