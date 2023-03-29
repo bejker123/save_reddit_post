@@ -1,16 +1,19 @@
 extern crate tokio;
 
+use std::time::SystemTime;
+
 use async_recursion::async_recursion;
+use json::JsonValue;
 
 use crate::{
-    cli::{ElementFilter, ElementFilterOp, ElementSort},
+    cli::{ElementFilter, ElementFilterOp, ElementSort, CLI},
     element::Element,
 };
 
 use rand::prelude::*;
 
 #[async_recursion]
-pub async fn request(url: String, retries: Option<usize>) -> Result<reqwest::Response,String> {
+pub async fn request(url: String, retries: Option<usize>) -> Result<reqwest::Response, String> {
     let retries = retries.unwrap_or(0);
     let client = reqwest::Client::new();
     match client.get(url.clone()).send().await {
@@ -182,9 +185,76 @@ pub fn sort_elements(
     for element in &mut elements {
         //sort children recursively
         element.children = sort_elements(element.children.clone(), sort_style)
-            .unwrap_or(Vec::new())
+            .unwrap_or_default()
             .clone();
     }
 
     Ok(elements)
+}
+
+pub async fn init() -> (CLI,JsonValue){
+    let args: Vec<String> = std::env::args().collect();
+    let start = SystemTime::now();
+    let cli = crate::cli::CLI::new(&args);
+
+    cli.print_info("Initialising: success.");
+
+    let Ok(res) = request(cli.url.clone(), None).await else{
+        CLI::print_err(format!("Requesting content from {}, fail", cli.url));
+    };
+
+    let data = if let Ok(o) = res.text().await {
+        cli.print_infom(format!("Requesting content from {}, success", cli.url));
+        o
+    } else {
+        CLI::print_err(format!("Requesting content from {}, fail", cli.url));
+    };
+
+    cli.print_info(format!(
+        "Downloaded content in {} ms",
+        start.elapsed().unwrap().as_millis()
+    ));
+
+    let json_data = if let Ok(o) = json::parse(&data) {
+        cli.print_info("Parsing to JSON: success");
+        o
+    } else {
+        CLI::print_err("Parsing to JSON error!");
+    };
+
+    let start = SystemTime::now();
+
+    if cli.save_tmp_files {
+        let tmp_dir = std::path::Path::new("tmp");
+        if !tmp_dir.exists() {
+            std::fs::create_dir(tmp_dir).unwrap();
+        }
+
+        match std::fs::write("tmp/raw.json", json_data.pretty(1)) {
+            Ok(_) => {
+                cli.print_info("Writing to JSON file: success");
+            }
+            Err(e) => CLI::print_err(format!("Writing to JSON file: fail.\nError: {e}")),
+        }
+    }
+    cli.print_info(format!("(in {} ms)", start.elapsed().unwrap().as_millis()));
+
+    let start = SystemTime::now();
+
+    if cli.save_tmp_files {
+        let tmp_dir = std::path::Path::new("tmp");
+        if !tmp_dir.exists() {
+            std::fs::create_dir(tmp_dir).unwrap();
+        }
+
+        match std::fs::write("tmp/raw.json", json_data.pretty(1)) {
+            Ok(_) => {
+                cli.print_info("Writing to JSON file: success");
+            }
+            Err(e) => CLI::print_err(format!("Writing to JSON file: fail.\nError: {e}")),
+        }
+    }
+    cli.print_info(format!("(in {} ms)", start.elapsed().unwrap().as_millis()));
+
+    (cli,json_data)
 }

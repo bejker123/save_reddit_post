@@ -9,7 +9,7 @@ pub struct OutputWriter {
 
 impl OutputWriter {
     pub fn new() -> Self {
-        OutputWriter {
+        Self {
             output: Box::new(std::io::stdout()),
             content: String::new(),
         }

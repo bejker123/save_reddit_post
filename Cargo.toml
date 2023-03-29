@@ -1,7 +1,12 @@
 [package]
 name = "srp" #save_reddit_post
-version = "0.3.6"
+version = "0.3.7"
 edition = "2021"
+repository = "https://github.com/bejker123/save_reddit_post"
+license-file = "LICENSE.MD"
+categories=["util"]
+keywords = ["util","reddit"]
+description = "Save reddit posts easily"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

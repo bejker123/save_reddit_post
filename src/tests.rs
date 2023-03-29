@@ -18,7 +18,7 @@ const CLI_ELEMENT_SORT_DEF: cli::ElementSort = cli::ElementSort::Default;
 #[test]
 fn test_element() {
     unsafe {
-        crate::element::FORMAT = crate::element::ElementFormat::Default;
+        crate::element::FORMAT = crate::element::Format::Default;
     }
     let data = include_str!("element_test_data1.json");
     let test_file_path = "test-output.tmp";
@@ -271,37 +271,37 @@ fn test_cli_parse_format() {
         cli::CLI::parse_format("default"),
         String::from("output.txt")
     );
-    assert_eq!(get_safe!(FORMAT), crate::element::ElementFormat::Default);
+    assert_eq!(get_safe!(FORMAT), crate::element::Format::Default);
 
     assert_eq!(cli::CLI::parse_format("d"), String::from("output.txt"));
-    assert_eq!(get_safe!(FORMAT), crate::element::ElementFormat::Default);
+    assert_eq!(get_safe!(FORMAT), crate::element::Format::Default);
 
     assert_eq!(cli::CLI::parse_format("html"), String::from("output.html"));
-    assert_eq!(get_safe!(FORMAT), crate::element::ElementFormat::HTML);
+    assert_eq!(get_safe!(FORMAT), crate::element::Format::HTML);
 
     assert_eq!(cli::CLI::parse_format("h"), String::from("output.html"));
-    assert_eq!(get_safe!(FORMAT), crate::element::ElementFormat::HTML);
+    assert_eq!(get_safe!(FORMAT), crate::element::Format::HTML);
 
     assert_eq!(cli::CLI::parse_format("json"), String::from("output.json"));
-    assert_eq!(get_safe!(FORMAT), crate::element::ElementFormat::JSON);
+    assert_eq!(get_safe!(FORMAT), crate::element::Format::JSON);
 
     assert_eq!(cli::CLI::parse_format("j"), String::from("output.json"));
-    assert_eq!(get_safe!(FORMAT), crate::element::ElementFormat::JSON);
+    assert_eq!(get_safe!(FORMAT), crate::element::Format::JSON);
 
     //Test edgecases
     assert_eq!(cli::CLI::parse_format("J"), String::from("output.json"));
-    assert_eq!(get_safe!(FORMAT), crate::element::ElementFormat::JSON);
+    assert_eq!(get_safe!(FORMAT), crate::element::Format::JSON);
 
     assert_eq!(cli::CLI::parse_format("HtMl"), String::from("output.html"));
-    assert_eq!(get_safe!(FORMAT), crate::element::ElementFormat::HTML);
+    assert_eq!(get_safe!(FORMAT), crate::element::Format::HTML);
 
     //Test invalid params
     assert_eq!(cli::CLI::parse_format("j"), String::from("output.json"));
-    assert_eq!(get_safe!(FORMAT), crate::element::ElementFormat::JSON);
+    assert_eq!(get_safe!(FORMAT), crate::element::Format::JSON);
 
     //Reset for test_element
     unsafe {
-        crate::element::FORMAT = crate::element::ElementFormat::Default;
+        crate::element::FORMAT = crate::element::Format::Default;
     }
 }
 

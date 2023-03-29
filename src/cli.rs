@@ -18,12 +18,12 @@ pub struct CLI {
     pub req_more_elements: bool,
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Copy,Default)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy, Default)]
 pub enum Verbosity {
     High,
     Moderate,
     #[default]
-    Low
+    Low,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
@@ -60,29 +60,38 @@ pub enum ElementFilter {
 }
 
 impl CLI {
-    pub fn print_err<T: Display>(&self,err: T) -> !{
-        println!("[{}::{}] {}",style("CLI").bold(),style("ERROR").bold().red(), style(err).red().bold());
+    pub fn print_err<T: Display>(err: T) -> ! {
+        println!(
+            "[{}::{}] {}",
+            style("CLI").bold(),
+            style("ERROR").bold().red(),
+            style(err).red().bold()
+        );
         exit(0);
     }
 
-    fn print_info_<T: Display>(&self,info: T){
-        println!("[{}::{}] {}",style("CLI").bold(),style("INFO").bold().blue(), style(info).blue());
+    fn print_info_<T: Display>(info: T) {
+        println!(
+            "[{}::{}] {info}",
+            style("CLI").bold(),
+            style("INFO").bold().green()
+        );
     }
 
-    pub fn print_info<T: Display>(&self,info: T){
-        if self.verbosity == Verbosity::High{
-            Self::print_info_(self, info);
+    pub fn print_info<T: Display>(&self, info: T) {
+        if self.verbosity == Verbosity::High {
+            Self::print_info_(info);
         }
     }
 
-    pub fn print_infom<T: Display>(&self,info: T){
-        if self.verbosity == Verbosity::High || self.verbosity == Verbosity::Moderate{
-            Self::print_info_(self, info);
+    pub fn print_infom<T: Display>(&self, info: T) {
+        if self.verbosity == Verbosity::High || self.verbosity == Verbosity::Moderate {
+            Self::print_info_(info);
         }
     }
 
-    pub fn print_infol<T: Display>(&self,info: T){
-        Self::print_info_(self, info);
+    pub fn print_infol<T: Display>(info: T) {
+        Self::print_info_(info);
     }
 
     fn print_arg(arg: &str, desc: &str) {
@@ -103,7 +112,10 @@ impl CLI {
         Self::print_arg("-s/--save", "specify save path(output.tmp by default)");
         Self::print_arg("-o/--output", "don't save to file just output to stdout");
         Self::print_arg("--no-more-elements", "don't request 'more' elements");
-        Self::print_arg("-v/--verbosity", "set cli verbosity (high/h, moderate/m, low/l)");
+        Self::print_arg(
+            "-v/--verbosity",
+            "set cli verbosity (high/h, moderate/m, low/l)",
+        );
         Self::print_arg(
             "-m/--max",
             "set the max amount comments to get (min 2, to get the actual post)",
@@ -168,19 +180,19 @@ impl CLI {
         match format.to_lowercase().trim() {
             "default" | "d" => {
                 unsafe {
-                    crate::element::FORMAT = crate::element::ElementFormat::Default;
+                    crate::element::FORMAT = crate::element::Format::Default;
                 }
                 save_path = String::from("output.txt");
             }
             "html" | "h" => {
                 unsafe {
-                    crate::element::FORMAT = crate::element::ElementFormat::HTML;
+                    crate::element::FORMAT = crate::element::Format::HTML;
                 }
                 save_path = String::from("output.html");
             }
             "json" | "j" => {
                 unsafe {
-                    crate::element::FORMAT = crate::element::ElementFormat::JSON;
+                    crate::element::FORMAT = crate::element::Format::JSON;
                 }
                 save_path = String::from("output.json");
             }
@@ -320,14 +332,7 @@ impl CLI {
                             println!("Invalid argument in filter: {filter_}");
                         }
                     },
-                    "<=" => match value.parse::<usize>() {
-                        Ok(o) => {
-                            filter = ElementFilter::Comments(ElementFilterOp::LessEq(o));
-                        }
-                        Err(_) => {
-                            println!("Invalid argument in filter: {filter_}");
-                        }
-                    },
+                    "<=" => value.parse::<usize>().map_or(println!("Invalid argument in filter: {filter_}"), |o| filter = ElementFilter::Comments(ElementFilterOp::LessEq(o))),
                     _ => println!("Invalid argument in filter: {filter_}"),
                 }
             }
@@ -448,7 +453,7 @@ impl CLI {
                         }
                         skip_count += 1;
                         let v = args[i + 1].clone().to_lowercase();
-                        match v.as_str(){
+                        match v.as_str() {
                             "h" | "high" => {
                                 verbosity = Verbosity::High;
                             }
@@ -458,7 +463,7 @@ impl CLI {
                             "l" | "low" => {
                                 verbosity = Verbosity::Low;
                             }
-                            _=>{
+                            _ => {
                                 println!("Invalid verbosity {v}");
                             }
                         }
@@ -477,8 +482,8 @@ impl CLI {
             }
         }
 
-        let (url, base_url) = CLI::parse_url(url);
-        CLI {
+        let (url, base_url) = Self::parse_url(url);
+        Self {
             url,
             base_url,
             save_to_file,
@@ -493,7 +498,8 @@ impl CLI {
     }
 
     pub fn parse_url(mut url: String) -> (String, String) {
-        if !url.contains("reddit.com/") {
+        //If it's not a reddit url it's concidered invalid
+        if !url.contains("reddit.com/r/") {
             println!("{}", style(format!("Invalid url: {url}")).red().bold());
             Self::help(true);
         }
@@ -501,9 +507,11 @@ impl CLI {
         url = url.replace('\'', "");
         url = url.replace(' ', "");
         url = url.replace('\n', "");
+        url = url.trim().to_owned();
 
         let search_for = '?';
 
+        //Delete the query part
         url = match url.rfind(search_for) {
             Some(idx) => url[0..idx].to_string(),
             _ => url,
@@ -511,18 +519,18 @@ impl CLI {
 
         let search_for = "https://";
 
-        let start_idx = if let Some(o) = url.find(search_for) {
-            o + search_for.len()
-        } else {
+        //Delete check if starts with "https://", if not add it
+        let start_idx = search_for.len() - 1;
+        if !url.starts_with(search_for) {
             url = search_for.to_owned() + &url;
-            search_for.len() - 1
-        };
-
+        }
+        //Look for ":", if found delete everything after it.
         url = match url[start_idx..].rfind(':') {
-            Some(q_idx) => url[0..q_idx + start_idx].to_string(),
+            Some(colon_idx) => url[0..colon_idx + start_idx].to_string(),
             _ => url,
         };
 
+        //This url is now concidered a base url
         let mut base_url = url.clone();
 
         //If url doens't contain at least 3 / it's assumed to be invalid
@@ -531,12 +539,14 @@ impl CLI {
             Self::help(true);
         }
 
+        //If url ends with '/' delete it, if not add '/' to the base url
         if url.ends_with('/') {
             url = url[0..url.len() - 1].to_string();
         } else {
             base_url += "/";
         }
 
+        //Check if url ends with .json, if not add it
         if !std::path::Path::new(&url)
             .extension()
             .map_or(false, |ext| ext.eq_ignore_ascii_case("json"))

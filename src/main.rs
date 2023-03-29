@@ -2,10 +2,10 @@ extern crate tokio;
 
 #[macro_use]
 mod element;
-use element::*;
+use cli::CLI;
+use element::{ELEMENTS_COUNT, Element, Format, FORMAT, MORE_ELEMENTS, MORE_ELEMENTS_COUNT, NUM_COMMENTS};
 
 mod cli;
-use cli::CLI;
 
 mod output_writer;
 use output_writer::OutputWriter;
@@ -37,23 +37,23 @@ fn write_to_output(
             Ok(o) => Box::new(o),
             Err(e) => return Err(format!("Failed to open file with error: {e}")),
         };
-            cli.print_info(format!("Writing to {}: ", cli.save_path));
+        cli.print_info(format!("Writing to {}: ", cli.save_path));
     }
     let mut ow = OutputWriter::new();
     ow = ow.set_output(output);
 
     //Write begining of the file:
     match get_safe!(FORMAT) {
-        ElementFormat::Default => {
+        Format::Default => {
             ow.content += &format!(
                 "# {{indent}} {{ups}} {{author}}: {{contnet}}\n\nSource: {}",
                 cli.base_url
             );
         }
-        ElementFormat::HTML => {
+        Format::HTML => {
             ow.content += &include_str!("html_file.html").replace("{title}", &cli.base_url);
         }
-        ElementFormat::JSON => ow.content += "{\"data\":[",
+        Format::JSON => ow.content += "{\"data\":[",
     }
 
     //Write every element to the output.
@@ -65,9 +65,9 @@ fn write_to_output(
 
     //Write the end:
     match get_safe!(FORMAT) {
-        ElementFormat::Default => {}
-        ElementFormat::HTML => ow.content += "\t</div>\n</body>\n</html>",
-        ElementFormat::JSON => {
+        Format::Default => {}
+        Format::HTML => ow.content += "\t</div>\n</body>\n</html>",
+        Format::JSON => {
             if let Some(r) = ow.content.clone().strip_suffix(",\n") {
                 ow.content = r.to_owned();
             }
@@ -79,7 +79,7 @@ fn write_to_output(
         Ok(_) => {
             if cli.save_to_file {
                 cli.print_info("Success");
-            }else{
+            } else {
                 cli.print_info("Writing to stdout: success");
             }
         }
@@ -89,7 +89,7 @@ fn write_to_output(
     //Print last bit of debug data
     //TODO: fix descrepency!!!
 
-    cli.print_infol(format!(
+    CLI::print_infol(format!(
         "Successfully got {} element{} NUM_COMMENTS: {}, in {}",
         get_safe!(ELEMENTS_COUNT),
         if get_safe!(ELEMENTS_COUNT) == 1 {
@@ -105,61 +105,16 @@ fn write_to_output(
 
 #[tokio::main]
 async fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    let start = SystemTime::now();
-    let cli = CLI::new(&args);
-
-    cli.print_info("Initialising: success.");
-    
-    let Ok(res) = request(cli.url.clone(), None).await else{
-        cli.print_err(format!("Requesting content from {}, fail", cli.url));
-    };
-
-    let data = if let Ok(o) = res.text().await {
-        cli.print_infom(format!("Requesting content from {}, success", cli.url));
-        o
-    } else {
-        cli.print_err(format!("Requesting content from {}, fail", cli.url));
-    };
-
-    cli.print_info(format!(
-        "Downloaded content in {} ms",
-        start.elapsed().unwrap().as_millis()
-    ));
-
-    let json_data = if let Ok(o) = json::parse(&data) {
-        cli.print_info("Parsing to JSON: success");
-        o
-    } else {
-        cli.print_err("Parsing to JSON error!");
-    };
-
-    let start = SystemTime::now();
-
-    if cli.save_tmp_files {
-        let tmp_dir = std::path::Path::new("tmp");
-        if !tmp_dir.exists() {
-            std::fs::create_dir(tmp_dir).unwrap();
-        }
-
-        match std::fs::write("tmp/raw.json", json_data.pretty(1)) {
-            Ok(_) => {
-                cli.print_info("Writing to JSON file: success");
-            }
-            Err(e) => cli.print_err(format!("Writing to JSON file: fail.\nError: {e}")),
-        }
-    }
-    cli.print_info(format!("(in {} ms)", start.elapsed().unwrap().as_millis()));
-
+    let (cli,json_data) = utils::init().await;
 
     let start = std::time::SystemTime::now();
 
     let elements = Element::init(&json_data, cli.max_comments);
 
     if elements.is_empty() {
-        cli.print_err("Parsing to elements: fail.");    
+        CLI::print_err("Parsing to elements: fail.");
     } else {
-        cli.print_info("Parsing to elements: success.");    
+        cli.print_info("Parsing to elements: success.");
     }
 
     let more_start = std::time::SystemTime::now();
@@ -178,9 +133,8 @@ async fn main() {
 
     //'more' elements
     if get_safe!(MORE_ELEMENTS_COUNT) > 0 && get_safe!(ELEMENTS_COUNT) < cli.max_comments {
-        if cli.req_more_elements{
-
-        cli.print_infom("Getting 'more' elements:");
+        if cli.req_more_elements {
+            cli.print_infom("Getting 'more' elements:");
 
             let mut threads: Vec<tokio::task::JoinHandle<_>> = Vec::new();
             let max_threads = 200;
@@ -233,8 +187,8 @@ async fn main() {
                 std::thread::sleep(std::time::Duration::from_millis(100));
             }
             println!();
-        } else{
-            cli.print_infom("Not requesting more elements, because of --no-more-elements flag")
+        } else {
+            cli.print_infom("Not requesting more elements, because of --no-more-elements flag");
         }
     }
 
@@ -243,30 +197,33 @@ async fn main() {
         "Error, returned 0 elements!"
     );
 
-    let mut elements = elements.lock().unwrap().clone();
+    let mut elements = match elements.lock(){
+        Ok(e) => e.clone(),
+        Err(_)=> CLI::print_err("Failed to lock elements!")
+    };
 
     //Sort elements (except the first one which is the parent element or the reddit post)
     if elements.len() > 1 {
         //Filter elements.
         elements = match filter_elements(elements, cli.filter.clone(), vec![]) {
             Some(o) => o.0,
-            None => cli.print_err("Error, no elements, after filtering."),
+            None => CLI::print_err("Error, no elements, after filtering."),
         };
         //Sort elements.
         if elements.len() > 2 {
             let mut elements_cp = Vec::from([match elements.get(0) {
                 Some(o) => o.clone(),
-                None => cli.print_err("Error, invalid elements!"),
+                None => CLI::print_err("Error, invalid elements!"),
             }]);
             elements_cp.append(
                 &mut sort_elements(elements[1..elements.len() - 1].to_vec(), cli.sort_style)
-                    .unwrap_or(Vec::new()),
+                    .unwrap_or_default(),
             );
             elements = elements_cp;
         }
     }
 
     if let Err(e) = write_to_output(&cli, &elements, start) {
-        cli.print_err(format!("Writing to output failed: {e}"));
+        CLI::print_err(format!("Writing to output failed: {e}"));
     }
 }

@@ -17,8 +17,8 @@ use std::io::Write;
 pub struct Empty;
 
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum ElementFormat {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Format {
     Default,
     HTML,
     JSON,
@@ -28,7 +28,7 @@ pub static mut NUM_COMMENTS: usize = 0;
 pub static mut ELEMENTS_COUNT: usize = 1;
 pub static mut MORE_ELEMENTS_COUNT: usize = 0;
 pub static mut MORE_ELEMENTS: Vec<String> = Vec::new();
-pub static mut FORMAT: ElementFormat = ElementFormat::Default;
+pub static mut FORMAT: Format = Format::Default;
 
 macro_rules! get_safe {
     ($var:ident) => {
@@ -65,7 +65,7 @@ pub struct Element {
 }
 
 impl PartialEq for Element {
-    fn eq(&self, other: &Element) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
 }
@@ -76,7 +76,7 @@ impl std::fmt::Debug for Element {
             return std::fmt::Result::Err(std::fmt::Error::default());
         }
         return match get_safe!(FORMAT) {
-            ElementFormat::Default => {
+            Format::Default => {
                 let children = self
                     .children
                     .iter()
@@ -105,7 +105,7 @@ impl std::fmt::Debug for Element {
                     children
                 ))
             }
-            ElementFormat::HTML => {
+            Format::HTML => {
                 let children = self
                     .children
                     .iter()
@@ -136,7 +136,7 @@ impl std::fmt::Debug for Element {
                     \n{indent}</div>", //TODO: add human readable formatting
                 ))
             }
-            ElementFormat::JSON => {
+            Format::JSON => {
                 fn parse_json_element(elem: &Element) -> json::object::Object {
                     let mut json_object = json::object::Object::new();
                     json_object.insert("author", JsonValue::String(elem.author.clone()));
@@ -163,7 +163,7 @@ impl std::fmt::Debug for Element {
 }
 
 impl Element {
-    pub fn create(child: &JsonValue, max_elements: usize) -> Result<Element, Empty> {
+    pub fn create(child: &JsonValue, max_elements: usize) -> Result<Self, Empty> {
         if get_safe!(ELEMENTS_COUNT) >= max_elements {
             return Err(Empty {});
         }
@@ -174,10 +174,7 @@ impl Element {
         //If the element lists more elements(it's kind is more)
         if child["kind"].clone() == "more" {
             unsafe {
-                MORE_ELEMENTS_COUNT += match data["count"].as_usize() {
-                    Some(o) => o,
-                    _ => 0,
-                }
+                MORE_ELEMENTS_COUNT += data["count"].as_usize().map_or(0, |o| o)
             }
             for more_element in data["children"].members() {
                 unsafe {
@@ -203,10 +200,7 @@ impl Element {
         let n_comments = get_data_wrapper!(data, num_comments, String::new());
         if !n_comments.is_empty() {
             unsafe {
-                NUM_COMMENTS = match n_comments.parse::<usize>() {
-                    Ok(o) => o,
-                    _ => 0,
-                }
+                NUM_COMMENTS = n_comments.parse::<usize>().map_or(0,|o| o)
             }
         }
 
@@ -233,17 +227,11 @@ impl Element {
         Ok(
             //Use this for clarity
             #[allow(clippy::redundant_field_names)]
-            Element {
+            Self {
                 author,
                 data: total_data,
-                children: match Element::get_replies(data, max_elements) {
-                    Ok(o) => o,
-                    _ => Vec::new(),
-                },
-                ups: match get_data_wrapper!(data, ups, "0".to_string()).parse::<usize>() {
-                    Ok(o) => o,
-                    _ => 0usize,
-                },
+                children: Element::get_replies(data, max_elements).map_or_else(|_| Vec::new(), |o| o),
+                ups :get_data_wrapper!(data, ups, "0".to_string()).parse::<usize>().map_or(0usize, |o| o),
                 //post_hint: get_data_wrapper!(data, "post_hint", String::new()),
                 url: get_data_wrapper!(data, url_overridden_by_dest, String::new()),
                 //a hacky way, but "kind" attribute is higher in the json tree so it would be a pain in the butt to get it that way
@@ -260,24 +248,14 @@ impl Element {
                     pid
                 },
                 over_18: get_data_wrapper!(data, over_18, String::from("false")) == *"true",
-                created: match get_data_wrapper!(data, created, usize::MAX.to_string())
-                    .parse::<f32>()
-                {
-                    #[allow(clippy::cast_possible_truncation)]
-                    Ok(o) => o as usize,
-                    _ => usize::MAX,
-                },
-                edited: match get_data_wrapper!(data, edited, usize::MAX.to_string()).parse::<f32>()
-                {
-                    #[allow(clippy::cast_possible_truncation)]
-                    Ok(o) => o as usize,
-                    _ => usize::MAX,
-                },
+                created: get_data_wrapper!(data, created, usize::MAX.to_string())
+                .parse::<f32>().map_or(usize::MAX, |o| o as usize),
+                edited: get_data_wrapper!(data, edited, usize::MAX.to_string()).parse::<f32>().map_or(usize::MAX, |o| o as usize),
             },
         )
     }
 
-    pub fn init(data: &JsonValue, max_elements: usize) -> Vec<Element> {
+    pub fn init(data: &JsonValue, max_elements: usize) -> Vec<Self> {
         let mut elements = Vec::<Element>::new();
 
         for member in data.members() {
@@ -294,7 +272,7 @@ impl Element {
         elements
     }
 
-    fn get_replies(element: &JsonValue, max_elements: usize) -> Result<Vec<Element>, Empty> {
+    fn get_replies(element: &JsonValue, max_elements: usize) -> Result<Vec<Self>, Empty> {
         let mut out = Vec::<Element>::new();
         if element["replies"] != JsonValue::Null {
             for child in element["replies"]["data"]["children"].members() {
@@ -320,7 +298,7 @@ impl Element {
     }
 
     //Recursively check every element, and if the first element matches appedn to it
-    fn append_element(x: &mut Vec<Element>, y: &mut Vec<Element>) {
+    fn append_element(x: &mut Vec<Self>, y: &mut Vec<Self>) {
         for element in &mut *y {
             if x.is_empty() {
                 break;
@@ -344,7 +322,7 @@ impl Element {
         idx: Arc<Mutex<f64>>,
         more_start: SystemTime,
         last_line_length: Arc<Mutex<usize>>,
-        elements: Arc<Mutex<Vec<Element>>>,
+        elements: Arc<Mutex<Vec<Self>>>,
         max_comments: usize,
     ) -> Option<String> {
         if get_safe!(ELEMENTS_COUNT) >= max_comments {
