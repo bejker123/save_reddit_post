@@ -44,7 +44,7 @@ fn test_element() {
             .to_owned()
             .replace("\r", "")
     );
-    std::fs::remove_file(test_file_path);
+    std::fs::remove_file(test_file_path).unwrap();
 }
 
 #[test]
@@ -79,6 +79,7 @@ fn test_cli() {
             sort_style: CLI_ELEMENT_SORT_DEF,
             save_tmp_files: false,
             verbosity: cli::Verbosity::Low,
+            req_more_elements: true,
         }
     );
     assert_eq!(
@@ -99,6 +100,7 @@ fn test_cli() {
             sort_style: CLI_ELEMENT_SORT_DEF,
             save_tmp_files: false,
             verbosity: cli::Verbosity::Low,
+            req_more_elements: true,
         }
     );
     assert_eq!(
@@ -113,6 +115,7 @@ fn test_cli() {
             sort_style: CLI_ELEMENT_SORT_DEF,
             save_tmp_files: false,
             verbosity: cli::Verbosity::Low,
+            req_more_elements: true,
         }
     );
 
@@ -133,6 +136,7 @@ fn test_cli() {
             sort_style: CLI_ELEMENT_SORT_DEF,
             save_tmp_files: true,
             verbosity: cli::Verbosity::Low,
+            req_more_elements: true,
         }
     );
 }

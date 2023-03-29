@@ -178,59 +178,64 @@ async fn main() {
 
     //'more' elements
     if get_safe!(MORE_ELEMENTS_COUNT) > 0 && get_safe!(ELEMENTS_COUNT) < cli.max_comments {
+        if cli.req_more_elements{
+
         cli.print_infom("Getting 'more' elements:");
 
-        let mut threads: Vec<tokio::task::JoinHandle<_>> = Vec::new();
-        let max_threads = 200;
-        let threads_running = Arc::new(Mutex::new(0usize));
-        //Get more elements from the 'more' listing
-        for more_element in &get_safe!(MORE_ELEMENTS) {
-            let x = cli.base_url.clone() + &more_element.clone() + ".json";
-            let (idx, last_line_length, elements, threads_running_) = (
-                Arc::clone(&idx),
-                Arc::clone(&last_line_length),
-                Arc::clone(&elements),
-                Arc::clone(&threads_running),
-            );
-            let base_url = cli.base_url.clone();
-            let more_elements_dir = more_elements_dir.to_str().unwrap().to_owned();
-            let t = tokio::spawn(async move {
-                if get_safe!(ELEMENTS_COUNT) >= cli.max_comments {
-                    return;
-                }
-                *threads_running_.lock().unwrap() += 1;
-                if let Some(o) = Element::get_more_element(
-                    x.clone(),
-                    idx,
-                    more_start,
-                    last_line_length,
-                    elements,
-                    cli.max_comments,
-                )
-                .await
-                {
-                    if cli.save_tmp_files {
-                        let filename = x.replace(&base_url, "").trim().to_owned();
-                        let mut file =
-                            std::fs::File::create(more_elements_dir + "/" + &filename).unwrap();
-                        file.write_fmt(format_args!("{o}")).unwrap();
+            let mut threads: Vec<tokio::task::JoinHandle<_>> = Vec::new();
+            let max_threads = 200;
+            let threads_running = Arc::new(Mutex::new(0usize));
+            //Get more elements from the 'more' listing
+            for more_element in &get_safe!(MORE_ELEMENTS) {
+                let x = cli.base_url.clone() + &more_element.clone() + ".json";
+                let (idx, last_line_length, elements, threads_running_) = (
+                    Arc::clone(&idx),
+                    Arc::clone(&last_line_length),
+                    Arc::clone(&elements),
+                    Arc::clone(&threads_running),
+                );
+                let base_url = cli.base_url.clone();
+                let more_elements_dir = more_elements_dir.to_str().unwrap().to_owned();
+                let t = tokio::spawn(async move {
+                    if get_safe!(ELEMENTS_COUNT) >= cli.max_comments {
+                        return;
                     }
+                    *threads_running_.lock().unwrap() += 1;
+                    if let Some(o) = Element::get_more_element(
+                        x.clone(),
+                        idx,
+                        more_start,
+                        last_line_length,
+                        elements,
+                        cli.max_comments,
+                    )
+                    .await
+                    {
+                        if cli.save_tmp_files {
+                            let filename = x.replace(&base_url, "").trim().to_owned();
+                            let mut file =
+                                std::fs::File::create(more_elements_dir + "/" + &filename).unwrap();
+                            file.write_fmt(format_args!("{o}")).unwrap();
+                        }
+                    }
+                    *threads_running_.lock().unwrap() -= 1;
+                });
+                threads.push(t);
+                while *threads_running.lock().unwrap() >= max_threads {
+                    std::thread::sleep(std::time::Duration::from_millis(10));
                 }
-                *threads_running_.lock().unwrap() -= 1;
-            });
-            threads.push(t);
-            while *threads_running.lock().unwrap() >= max_threads {
-                std::thread::sleep(std::time::Duration::from_millis(10));
+                std::thread::sleep(std::time::Duration::from_millis(100));
             }
-            std::thread::sleep(std::time::Duration::from_millis(100));
-        }
-        loop {
-            if *threads_running.lock().unwrap() == 0 {
-                break;
+            loop {
+                if *threads_running.lock().unwrap() == 0 {
+                    break;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(100));
             }
-            std::thread::sleep(std::time::Duration::from_millis(100));
+            println!();
+        } else{
+            cli.print_infom("Not requesting more elements, because of --no-more-elements flag")
         }
-        println!();
     }
 
     assert!(

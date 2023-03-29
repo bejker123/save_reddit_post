@@ -15,6 +15,7 @@ pub struct CLI {
     pub filter: ElementFilter,
     pub save_tmp_files: bool,
     pub verbosity: Verbosity,
+    pub req_more_elements: bool,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy,Default)]
@@ -101,6 +102,7 @@ impl CLI {
         Self::print_arg("-h/--help", "display this help");
         Self::print_arg("-s/--save", "specify save path(output.tmp by default)");
         Self::print_arg("-o/--output", "don't save to file just output to stdout");
+        Self::print_arg("--no-more-elements", "don't request 'more' elements");
         Self::print_arg("-v/--verbosity", "set cli verbosity (high/h, moderate/m, low/l)");
         Self::print_arg(
             "-m/--max",
@@ -363,6 +365,7 @@ impl CLI {
         let mut filter = ElementFilter::Default; //ElementFilter::Comments(ElementFilterOp::Grater(1));//ElementFilter::Edited(false);//ElementFilter::Author(ElementFilterOp::NotEqString(String::from("funambula")));
         let mut save_tmp_files = false;
         let mut verbosity = Verbosity::default();
+        let mut req_more_elements = true;
 
         if args.len() == 1 {
             Self::help(true);
@@ -460,6 +463,9 @@ impl CLI {
                             }
                         }
                     }
+                    "--no-more-elements" => {
+                        req_more_elements = false;
+                    }
                     _ => {
                         println!("Invalid argument: {}", args[i]);
                     }
@@ -482,6 +488,7 @@ impl CLI {
             filter,
             save_tmp_files,
             verbosity,
+            req_more_elements,
         }
     }
 
