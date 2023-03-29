@@ -126,7 +126,7 @@ fn test_cli() {
         CLI::new(&[
             st("test-bin"),
             st("-o"),
-            st("--save-tmp-files"),
+            st("--save-tmp"),
             st("https://test-url.com/")
         ]),
         CLI {

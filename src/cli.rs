@@ -380,7 +380,7 @@ impl CLI {
         let mut save_tmp_files = false;
         let mut verbosity = Verbosity::default();
         let mut req_more_elements = true;
-        let mut delete_tmp = true;
+        let mut delete_tmp = false;
 
         if args.len() == 1 {
             Self::help(true);
