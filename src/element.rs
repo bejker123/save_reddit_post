@@ -8,9 +8,10 @@ use std::{
     time::SystemTime,
 };
 
+use console::style;
 use json::JsonValue;
 
-use crate::{cli::Verbosity, convert_time, request};
+use crate::{cli::Verbosity, convert_time, request, utils::get_timestamp};
 use std::io::Write;
 
 #[derive(Debug)]
@@ -313,6 +314,7 @@ impl Element {
 
     pub async fn get_more_element(
         verbosity: &Verbosity,
+        print_timestamps: bool,
         base_url: String,
         idx: Arc<Mutex<f64>>,
         more_start: SystemTime,
@@ -361,7 +363,8 @@ impl Element {
 
             //Format the line to be printed
             let mut line = format!(
-                "{idx_} / {} {:.2}% runtime: {} ETA: {}",
+                "{}{idx_} / {} {:.2}% runtime: {} ETA: {}",
+                get_timestamp(print_timestamps),
                 get_safe!(MORE_ELEMENTS).len(),
                 precent,
                 convert_time(passed),

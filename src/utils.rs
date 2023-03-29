@@ -3,6 +3,7 @@ extern crate tokio;
 use std::time::SystemTime;
 
 use async_recursion::async_recursion;
+use console::{style, StyledObject};
 use json::JsonValue;
 
 use crate::{
@@ -27,6 +28,14 @@ pub async fn request(url: String, retries: Option<usize>) -> Result<reqwest::Res
                 request(url, Some(retries + 1)).await
             }
         }
+    }
+}
+
+pub fn get_timestamp(get: bool) -> StyledObject<String>{
+    if get {
+        style(chrono::Local::now().format("[%H:%M:%S] ").to_string()).yellow().bold()
+    }else{
+        style("".to_owned())
     }
 }
 
@@ -209,12 +218,12 @@ pub async fn init() -> (CLI, JsonValue) {
     cli.print_info("Initialising CLI: success");
     cli.print_infom(format!("Requesting content from {}:", cli.url));
     let Ok(res) = request(cli.url.clone(), None).await else{
-        CLI::print_err("Fail");
+        CLI::print_err_no_timestamp("Fail");
     };
 
     let data = (res.text().await).map_or_else(
         |_| {
-            CLI::print_err("Fail");
+            CLI::print_err_no_timestamp("Fail");
         },
         |o| {
             cli.print_infom(format!(
@@ -227,7 +236,7 @@ pub async fn init() -> (CLI, JsonValue) {
 
     let json_data = json::parse(&data).map_or_else(
         |_| {
-            CLI::print_err("Parsing to JSON error!");
+            CLI::print_err_no_timestamp("Parsing to JSON error!");
         },
         |o| {
             cli.print_info("Parsing to JSON: success");
@@ -245,7 +254,9 @@ pub async fn init() -> (CLI, JsonValue) {
             Ok(_) => {
                 cli.print_info("Writing to JSON file: success");
             }
-            Err(e) => CLI::print_err(format!("Writing to JSON file: fail.\nError: {e}")),
+            Err(e) => {
+                CLI::print_err_no_timestamp(format!("Writing to JSON file: fail.\nError: {e}"))
+            }
         }
     }
 
@@ -259,7 +270,9 @@ pub async fn init() -> (CLI, JsonValue) {
             Ok(_) => {
                 cli.print_info("Writing to JSON file: success");
             }
-            Err(e) => CLI::print_err(format!("Writing to JSON file: fail.\nError: {e}")),
+            Err(e) => {
+                CLI::print_err_no_timestamp(format!("Writing to JSON file: fail.\nError: {e}"))
+            }
         }
     }
     cli.print_info(format!(

@@ -17,13 +17,14 @@ pub struct CLI {
     pub verbosity: Verbosity,
     pub req_more_elements: bool,
     pub delete_tmp: bool,
+    pub print_timestamps: bool,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Default)]
 pub enum Verbosity {
     High,
-    Moderate,
     #[default]
+    Moderate,
     Low,
 }
 
@@ -61,7 +62,18 @@ pub enum ElementFilter {
 }
 
 impl CLI {
-    pub fn print_err<T: Display>(err: T) -> ! {
+    pub fn print_err<T: Display>(&self, err: T) -> ! {
+        println!(
+            "{}[{}::{}] {}",
+            crate::utils::get_timestamp(self.print_timestamps),
+            style("CLI").bold(),
+            style("ERROR").bold().red(),
+            style(err).red().bold()
+        );
+        exit(0);
+    }
+
+    pub fn print_err_no_timestamp<T: Display>(err: T) -> ! {
         println!(
             "[{}::{}] {}",
             style("CLI").bold(),
@@ -71,7 +83,7 @@ impl CLI {
         exit(0);
     }
 
-    fn print_info_<T: Display>(info: T) {
+    pub fn print_info_no_timestamp<T: Display>(info: T) {
         println!(
             "[{}::{}] {info}",
             style("CLI").bold(),
@@ -79,20 +91,41 @@ impl CLI {
         );
     }
 
+    fn print_info_<T: Display>(&self, info: T) {
+        println!(
+            "{}[{}::{}] {info}",
+            crate::utils::get_timestamp(self.print_timestamps),
+            style("CLI").bold(),
+            style("INFO").bold().green()
+        );
+    }
+
     pub fn print_info<T: Display>(&self, info: T) {
         if self.verbosity == Verbosity::High {
-            Self::print_info_(info);
+            self.print_info_(info);
+        }
+    }
+
+    pub fn print_warning<T: Display>(&self, info: T) {
+        if self.verbosity == Verbosity::High || self.verbosity == Verbosity::Moderate {
+            println!(
+                "{}[{}::{}] {}",
+                crate::utils::get_timestamp(self.print_timestamps),
+                style("CLI").bold(),
+                style("WARNING").bold().yellow(),
+                style(info).yellow()
+            );
         }
     }
 
     pub fn print_infom<T: Display>(&self, info: T) {
         if self.verbosity == Verbosity::High || self.verbosity == Verbosity::Moderate {
-            Self::print_info_(info);
+            self.print_info_(info);
         }
     }
 
-    pub fn print_infol<T: Display>(info: T) {
-        Self::print_info_(info);
+    pub fn print_infol<T: Display>(&self, info: T) {
+        self.print_info_(info);
     }
 
     fn print_arg(arg: &str, desc: &str) {
@@ -123,6 +156,7 @@ impl CLI {
         );
         Self::print_arg("--save-tmp", "allow saving temp files (raw json data)");
         Self::print_arg("--delete-tmp", "delete temp files folder");
+        Self::print_arg("--timestamps", "show timestamps");
         Self::print_arg("-f/--format", "set the format (not case sensitive)");
 
         let padding = '\t';
@@ -340,7 +374,9 @@ impl CLI {
                             filter = ElementFilter::Comments(ElementFilterOp::LessEq(o));
                         },
                     ),
-                    _ => Self::print_info_(format!("Invalid argument in filter: {filter_}")),
+                    _ => Self::print_info_no_timestamp(format!(
+                        "Invalid argument in filter: {filter_}"
+                    )),
                 }
             }
             "edited" => {
@@ -364,7 +400,7 @@ impl CLI {
                     println!("Invalid operator in filter: {operator}");
                 }
             }
-            _ => Self::print_info_(format!("Invalid argument in filter: {filter_}")),
+            _ => Self::print_info_no_timestamp(format!("Invalid argument in filter: {filter_}")),
         };
         Ok((skip_count, filter))
     }
@@ -380,6 +416,7 @@ impl CLI {
         let mut verbosity = Verbosity::default();
         let mut req_more_elements = true;
         let mut delete_tmp = false;
+        let mut print_timestamps = false;
 
         if args.len() == 1 {
             Self::help(true);
@@ -446,7 +483,7 @@ impl CLI {
                         }
                         skip_count += 1;
                         let Some(filter_) = args.get(i + 1) else {
-                            Self::print_err("Failed to get --filter filter")
+                            Self::print_err_no_timestamp("Failed to get --filter filter")
                         };
                         let (skip_count_inc, filter_) = match Self::parse_filter_style(
                             filter_,
@@ -454,7 +491,7 @@ impl CLI {
                             args.get(i + 3),
                         ) {
                             Ok(o) => o,
-                            Err(e) => Self::print_err(e),
+                            Err(e) => Self::print_err_no_timestamp(e),
                         };
                         filter = filter_;
                         skip_count += skip_count_inc;
@@ -489,6 +526,9 @@ impl CLI {
                     "--no-more-elements" => {
                         req_more_elements = false;
                     }
+                    "--timestamps" => {
+                        print_timestamps = true;
+                    }
                     _ => {
                         println!("Invalid argument: {}", args[i]);
                     }
@@ -513,6 +553,7 @@ impl CLI {
             verbosity,
             req_more_elements,
             delete_tmp,
+            print_timestamps,
         }
     }
 

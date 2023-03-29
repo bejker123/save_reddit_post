@@ -81,6 +81,7 @@ fn test_cli() {
             verbosity: cli::Verbosity::Low,
             req_more_elements: true,
             delete_tmp: false,
+            print_timestamps: false,
         }
     );
     assert_eq!(
@@ -103,6 +104,7 @@ fn test_cli() {
             verbosity: cli::Verbosity::Low,
             req_more_elements: true,
             delete_tmp: false,
+            print_timestamps: false,
         }
     );
     assert_eq!(
@@ -119,6 +121,7 @@ fn test_cli() {
             verbosity: cli::Verbosity::Low,
             req_more_elements: true,
             delete_tmp: false,
+            print_timestamps: false,
         }
     );
 
@@ -141,6 +144,7 @@ fn test_cli() {
             verbosity: cli::Verbosity::Low,
             req_more_elements: true,
             delete_tmp: false,
+            print_timestamps: false,
         }
     );
 }

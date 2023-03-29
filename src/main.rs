@@ -91,7 +91,7 @@ fn write_to_output(
     //Print last bit of debug data
     //TODO: fix descrepency!!!
 
-    CLI::print_infol(format!(
+    cli.print_infol(format!(
         "Successfully got {} element{}, in {}",
         get_safe!(ELEMENTS_COUNT),
         if get_safe!(ELEMENTS_COUNT) == 1 {
@@ -120,7 +120,7 @@ async fn main() {
     let elements = Element::init(&json_data, cli.max_comments);
 
     if elements.is_empty() {
-        CLI::print_err("Parsing to elements: fail.");
+        cli.print_err("Parsing to elements: fail.");
     } else {
         cli.print_info("Parsing to elements: success.");
     }
@@ -166,6 +166,7 @@ async fn main() {
                     *threads_running_.lock().unwrap() += 1;
                     if let Some(o) = Element::get_more_element(
                         &cli.verbosity,
+                        cli.print_timestamps,
                         x.clone(),
                         idx,
                         more_start,
@@ -206,22 +207,21 @@ async fn main() {
         "Error, returned 0 elements!"
     );
 
-    let mut elements = elements.lock().map_or_else(
-        |_| CLI::print_err("Failed to lock elements!"),
-        |e| e.clone(),
-    );
+    let mut elements = elements
+        .lock()
+        .map_or_else(|_| cli.print_err("Failed to lock elements!"), |e| e.clone());
 
     //Sort elements (except the first one which is the parent element or the reddit post)
     if elements.len() > 1 {
         //Filter elements.
         elements = match filter_elements(elements, cli.filter.clone(), vec![]) {
             Some(o) => o.0,
-            None => CLI::print_err("Error, no elements, after filtering."),
+            None => cli.print_err("Error, no elements, after filtering."),
         };
         //Sort elements.
         if elements.len() > 2 {
             let mut elements_cp = Vec::from([elements.get(0).map_or_else(
-                || CLI::print_err("Error, invalid elements!"),
+                || cli.print_err("Error, invalid elements!"),
                 std::clone::Clone::clone,
             )]);
             elements_cp.append(
@@ -233,11 +233,11 @@ async fn main() {
     }
 
     if let Err(e) = write_to_output(&cli, &elements, start) {
-        CLI::print_err(format!("Writing to output failed: {e}"));
+        cli.print_err(format!("Writing to output failed: {e}"));
     }
     if cli.delete_tmp {
         if let Err(e) = utils::delete_tmp() {
-            CLI::print_err(e);
+            cli.print_warning(e);
         }
     }
 }
