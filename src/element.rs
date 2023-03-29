@@ -10,7 +10,7 @@ use std::{
 
 use json::JsonValue;
 
-use crate::{convert_time, request, cli::Verbosity};
+use crate::{cli::Verbosity, convert_time, request};
 use std::io::Write;
 
 #[derive(Debug)]
@@ -212,41 +212,41 @@ impl Element {
 
         let author = get_data_wrapper!(data, author, String::new());
 
-        unsafe {ELEMENTS_COUNT += 1;}
-        
-        Some(
-            Self {
-                author,
-                //The data only stores some of the acctual text data
-                data: total_data,
-                children: Self::get_replies(data, max_elements).map_or_else(|_| Vec::new(), |o| o),
-                ups: get_data_wrapper!(data, ups, "0".to_string())
-                    .parse::<usize>()
-                    .map_or(0usize, |o| o),
-                url: get_data_wrapper!(data, url_overridden_by_dest, String::new()),
-                //a hacky way, but "kind" attribute is higher in the json tree so it would be a pain in the butt to get it that way
-                kind: get_data_wrapper!(data, name, String::new())[0..2].to_owned(),
-                depth: get_data_wrapper!(data, depth, "0".to_string()),
-                permalink: get_data_wrapper!(data, permalink, String::new()),
-                id: get_data_wrapper!(data, id, String::new()),
-                parent_id: {
-                    //parent_id also stores the kind as in XY_<id>, where XY is the kind 
-                    let mut pid = get_data_wrapper!(data, parent_id, String::new());
-                    if pid.len() > 3 {
-                        pid = pid[3..].to_string();
-                    }
-                    pid
-                },
-                over_18: get_data_wrapper!(data, over_18, String::from("false")) == *"true",
-                created: get_data_wrapper!(data, created, usize::MAX.to_string())
-                    .parse::<f32>()
-                    .map_or(usize::MAX, |o| o as usize),
-                //TODO: change edited to an enum (false/timestamp as a uszie)
-                edited: get_data_wrapper!(data, edited, usize::MAX.to_string())
-                    .parse::<f32>()
-                    .map_or(usize::MAX, |o| o as usize),
+        unsafe {
+            ELEMENTS_COUNT += 1;
+        }
+
+        Some(Self {
+            author,
+            //The data only stores some of the acctual text data
+            data: total_data,
+            children: Self::get_replies(data, max_elements).map_or_else(|_| Vec::new(), |o| o),
+            ups: get_data_wrapper!(data, ups, "0".to_string())
+                .parse::<usize>()
+                .map_or(0usize, |o| o),
+            url: get_data_wrapper!(data, url_overridden_by_dest, String::new()),
+            //a hacky way, but "kind" attribute is higher in the json tree so it would be a pain in the butt to get it that way
+            kind: get_data_wrapper!(data, name, String::new())[0..2].to_owned(),
+            depth: get_data_wrapper!(data, depth, "0".to_string()),
+            permalink: get_data_wrapper!(data, permalink, String::new()),
+            id: get_data_wrapper!(data, id, String::new()),
+            parent_id: {
+                //parent_id also stores the kind as in XY_<id>, where XY is the kind
+                let mut pid = get_data_wrapper!(data, parent_id, String::new());
+                if pid.len() > 3 {
+                    pid = pid[3..].to_string();
+                }
+                pid
             },
-        )
+            over_18: get_data_wrapper!(data, over_18, String::from("false")) == *"true",
+            created: get_data_wrapper!(data, created, usize::MAX.to_string())
+                .parse::<f32>()
+                .map_or(usize::MAX, |o| o as usize),
+            //TODO: change edited to an enum (false/timestamp as a uszie)
+            edited: get_data_wrapper!(data, edited, usize::MAX.to_string())
+                .parse::<f32>()
+                .map_or(usize::MAX, |o| o as usize),
+        })
     }
 
     pub fn init(data: &JsonValue, max_elements: usize) -> Vec<Self> {
@@ -380,7 +380,7 @@ impl Element {
             //Print the line and flush stdout
             //If you don't flush stdout not every line will be printed,
             //Because print! doesn't flush as oppose to println!
-            if *verbosity == Verbosity::High || *verbosity == Verbosity::Moderate{
+            if *verbosity == Verbosity::High || *verbosity == Verbosity::Moderate {
                 print!("\r{line}");
                 std::io::stdout().flush().unwrap();
             }

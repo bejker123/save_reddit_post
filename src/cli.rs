@@ -228,7 +228,7 @@ impl CLI {
         filter_: &String,
         operator: Option<&String>,
         value: Option<&String>,
-    ) -> Result<(u32, ElementFilter),String> {
+    ) -> Result<(u32, ElementFilter), String> {
         let mut filter = ElementFilter::Default;
         let mut skip_count = 0;
         match filter_.to_lowercase().trim() {
@@ -357,11 +357,9 @@ impl CLI {
                 let Some(operator) = operator else { return Err("Failed to get filter style operator".to_owned()) };
                 let operator = operator.to_lowercase();
                 if operator.trim() == "==" {
-                    filter =
-                        ElementFilter::Author(ElementFilterOp::EqString(value.clone()));
+                    filter = ElementFilter::Author(ElementFilterOp::EqString(value.clone()));
                 } else if operator.trim() == "!=" {
-                    filter =
-                        ElementFilter::Author(ElementFilterOp::NotEqString(value.clone()));
+                    filter = ElementFilter::Author(ElementFilterOp::NotEqString(value.clone()));
                 } else {
                     println!("Invalid operator in filter: {operator}");
                 }
@@ -454,9 +452,9 @@ impl CLI {
                             filter_,
                             args.get(i + 2),
                             args.get(i + 3),
-                        ){
-                            Ok(o)=>o,
-                            Err(e)=>Self::print_err(e)
+                        ) {
+                            Ok(o) => o,
+                            Err(e) => Self::print_err(e),
                         };
                         filter = filter_;
                         skip_count += skip_count_inc;
@@ -496,7 +494,10 @@ impl CLI {
                     }
                 }
             }
-            args.last().map_or_else(|| panic!("Failed to get last of args!"), |o| url = o.to_string())
+            args.last().map_or_else(
+                || panic!("Failed to get last of args!"),
+                |o| url = o.to_string(),
+            )
         }
 
         let (url, base_url) = Self::parse_url(url);

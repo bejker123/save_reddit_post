@@ -12,7 +12,7 @@ use crate::{
 
 use rand::prelude::*;
 
-pub const TMP_DIR: &str = "tmp/"; 
+pub const TMP_DIR: &str = "tmp/";
 
 #[async_recursion]
 pub async fn request(url: String, retries: Option<usize>) -> Result<reqwest::Response, String> {
@@ -212,22 +212,28 @@ pub async fn init() -> (CLI, JsonValue) {
         CLI::print_err("Fail");
     };
 
-    let data = (res.text().await).map_or_else(|_|{
-        CLI::print_err("Fail");
-    },|o| {
-        cli.print_infom(format!(
-            "Success in {}",
-            convert_time(start.elapsed().unwrap().as_secs_f64())
-        ));
-        o
-    });
+    let data = (res.text().await).map_or_else(
+        |_| {
+            CLI::print_err("Fail");
+        },
+        |o| {
+            cli.print_infom(format!(
+                "Success in {}",
+                convert_time(start.elapsed().unwrap().as_secs_f64())
+            ));
+            o
+        },
+    );
 
-    let json_data = json::parse(&data).map_or_else(|_|{
-        CLI::print_err("Parsing to JSON error!");
-    }, |o|{
-        cli.print_info("Parsing to JSON: success");
-        o
-    });
+    let json_data = json::parse(&data).map_or_else(
+        |_| {
+            CLI::print_err("Parsing to JSON error!");
+        },
+        |o| {
+            cli.print_info("Parsing to JSON: success");
+            o
+        },
+    );
 
     if cli.save_tmp_files {
         let tmp_dir = std::path::Path::new(TMP_DIR);
@@ -235,7 +241,7 @@ pub async fn init() -> (CLI, JsonValue) {
             std::fs::create_dir(tmp_dir).unwrap();
         }
 
-        match std::fs::write(TMP_DIR.to_owned()+"raw.json", json_data.pretty(1)) {
+        match std::fs::write(TMP_DIR.to_owned() + "raw.json", json_data.pretty(1)) {
             Ok(_) => {
                 cli.print_info("Writing to JSON file: success");
             }
@@ -249,7 +255,7 @@ pub async fn init() -> (CLI, JsonValue) {
             std::fs::create_dir(tmp_dir).unwrap();
         }
 
-        match std::fs::write(TMP_DIR.to_owned()+"raw.json", json_data.pretty(1)) {
+        match std::fs::write(TMP_DIR.to_owned() + "raw.json", json_data.pretty(1)) {
             Ok(_) => {
                 cli.print_info("Writing to JSON file: success");
             }
