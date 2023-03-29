@@ -32,7 +32,6 @@ It will go through many changes in the future!
 
 ## Roadmap/Goals
 
-- [ ] Change first arg to url?
 - [x] Add url validation
 - [x] Add getting all comments on a post 
 - [x] Add formatting, ex. HTML
@@ -45,6 +44,7 @@ It will go through many changes in the future!
   - [x] an option to request 'more' elements or not
   - [ ] an option for no color output
   - [ ] an option for printing timestamps
+  - [ ] Change first arg to url?
 - [ ] Perform more tests
 - [ ] Media saving (images, videos)
 
