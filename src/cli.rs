@@ -233,14 +233,8 @@ impl CLI {
         let mut skip_count = 0;
         match filter_.to_lowercase().trim() {
             "ups" | "upvotes" => {
-                let value = match value{
-                    Some(o)=>o,
-                    None => return Err("Failed to get filter style value".to_string())
-                };
-                let operator = match operator{
-                    Some(o)=>o,
-                    None => return Err("Failed to get filter style operator".to_string())
-                };
+                let Some(value) = value else { return Err("Failed to get filter style value".to_owned()) };
+                let Some(operator) = operator else { return Err("Failed to get filter style operator".to_owned()) };
                 skip_count += 2;
                 match operator.as_str() {
                     ">" => match value.parse::<usize>() {
@@ -295,15 +289,9 @@ impl CLI {
                 }
             }
             "comments" => {
-                let value = match value{
-                    Some(o)=>o,
-                    None => return Err("Failed to get filter style value".to_owned())
-                };
+                let Some(value) = value else { return Err("Failed to get filter style value".to_owned()) };
+                let Some(operator) = operator else { return Err("Failed to get filter style operator".to_owned()) };
                 skip_count += 2;
-                let operator = match operator{
-                    Some(o)=>o,
-                    None => return Err("Failed to get filter style operator".to_owned())
-                };
                 match operator.as_str() {
                     ">" => match value.parse::<usize>() {
                         Ok(o) => {
@@ -345,6 +333,7 @@ impl CLI {
                             println!("Invalid argument in filter: {filter_}");
                         }
                     },
+                    #[allow(clippy::unit_arg)]
                     "<=" => value.parse::<usize>().map_or(
                         println!("Invalid argument in filter: {filter_}"),
                         |o| {
@@ -355,10 +344,7 @@ impl CLI {
                 }
             }
             "edited" => {
-                let operator = match operator{
-                    Some(o)=>o,
-                    None => return Err("Failed to get filter style operator".to_owned())
-                };
+                let Some(operator) = operator else { return Err("Failed to get filter style operator".to_owned()) };
                 let operator = operator.to_lowercase();
                 if operator.trim() == "false" {
                     filter = ElementFilter::Edited(false);
@@ -367,14 +353,8 @@ impl CLI {
                 }
             }
             "author" => {
-                let value = match value{
-                    Some(o)=>o,
-                    None => return Err("Failed to get filter style value".to_owned())
-                };
-                let operator = match operator{
-                    Some(o)=>o,
-                    None => return Err("Failed to get filter style operator".to_owned())
-                };
+                let Some(value) = value else { return Err("Failed to get filter style value".to_owned()) };
+                let Some(operator) = operator else { return Err("Failed to get filter style operator".to_owned()) };
                 let operator = operator.to_lowercase();
                 if operator.trim() == "==" {
                     filter =
@@ -467,9 +447,8 @@ impl CLI {
                             Self::help(true);
                         }
                         skip_count += 1;
-                        let filter_ = match args.get(i + 1){
-                            Some(o)=>o,
-                            None => Self::print_err("Failed to get --filter filter")
+                        let Some(filter_) = args.get(i + 1) else {
+                            Self::print_err("Failed to get --filter filter")
                         };
                         let (skip_count_inc, filter_) = match Self::parse_filter_style(
                             filter_,
