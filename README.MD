@@ -43,7 +43,7 @@ It will go through many changes in the future!
   - [x] cli verbosity options
   - [x] an option to request 'more' elements or not
   - [ ] an option for no color output
-  - [ ] an option for printing timestamps
+  - [x] an option for printing timestamps
   - [ ] Change first arg to url?
 - [ ] Perform more tests
 - [ ] Media saving (images, videos)
