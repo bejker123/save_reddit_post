@@ -55,7 +55,10 @@ fn test_cli() {
     let cli1 = CLI::new(&[st("test-bin"), st("https://reddit.com/r/asd")]);
     assert_eq!(
         (cli1.url, cli1.base_url),
-        (st("https://reddit.com/r/asd.json"), st("https://reddit.com/r/asd/"))
+        (
+            st("https://reddit.com/r/asd.json"),
+            st("https://reddit.com/r/asd/")
+        )
     );
     let cli2 = CLI::new(&[st("test-bin"), st("https://reddit.com/r/")]);
     assert_eq!(
@@ -153,7 +156,10 @@ fn test_cli() {
 fn test_cli_parse_url() {
     assert_eq!(
         CLI::parse_url(st("https://reddit.com/r/asd")),
-        (st("https://reddit.com/r/asd.json"), st("https://reddit.com/r/asd/"))
+        (
+            st("https://reddit.com/r/asd.json"),
+            st("https://reddit.com/r/asd/")
+        )
     );
     assert_eq!(
         CLI::parse_url(st("https://reddit.com/r/asd/?foo&bar:443")),

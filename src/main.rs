@@ -2,114 +2,20 @@ extern crate tokio;
 
 #[macro_use]
 mod element;
-use cli::CLI;
+
 use element::{
-    Element, Format, ELEMENTS_COUNT, FORMAT, MORE_ELEMENTS, MORE_ELEMENTS_COUNT, NUM_COMMENTS,
+    Element, ELEMENTS_COUNT, MORE_ELEMENTS, MORE_ELEMENTS_COUNT,
 };
 
 mod cli;
-
 mod output_writer;
-use output_writer::OutputWriter;
 
 mod utils;
-use utils::{convert_time, filter_elements, request, sort_elements};
+use utils::{convert_time, request};
 
 mod tests;
 
-use std::{io::Write, sync::Arc, sync::Mutex, time::SystemTime};
-
-fn write_to_output(
-    cli: &cli::CLI,
-    elements: &Vec<Element>,
-    start: SystemTime,
-) -> Result<(), String> {
-    //Set the default output to stdout
-    let mut output: Box<dyn Write> = Box::new(std::io::stdout());
-
-    //If user specified saving to a file.
-    //Change the output to the file.
-    if cli.save_to_file {
-        output = match std::fs::OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(cli.save_path.clone())
-        {
-            Ok(o) => Box::new(o),
-            Err(e) => return Err(format!("Failed to open file with error: {e}")),
-        };
-        cli.print_info(format!("Writing to {}: ", cli.save_path));
-    }
-    let mut ow = OutputWriter::new();
-    ow = ow.set_output(output);
-
-    //Write begining of the file:
-    match get_safe!(FORMAT) {
-        Format::Default => {
-            ow.content += &format!(
-                "# {{indent}} {{ups}} {{author}}: {{contnet}}\n\nSource: {}",
-                cli.base_url
-            );
-        }
-        Format::HTML => {
-            ow.content += &include_str!("html_file.html").replace("{title}", &cli.base_url);
-        }
-        Format::JSON => ow.content += "{\"data\":[",
-    }
-
-    //Write every element to the output.
-    //For formatting see element.rs:
-    //                   impl std::fmt::Debug for Element
-    for elem in elements {
-        ow.content += &format!("{elem}");
-    }
-
-    //Write the end:
-    match get_safe!(FORMAT) {
-        Format::Default => {}
-        Format::HTML => ow.content += "\t</div>\n</body>\n</html>",
-        Format::JSON => {
-            if let Some(r) = ow.content.clone().strip_suffix(",\n") {
-                ow.content = r.to_owned();
-            }
-            ow.content += "\n]}";
-        }
-    }
-
-    match ow.write() {
-        Ok(_) => {
-            if cli.save_to_file {
-                cli.print_info("Success");
-            } else {
-                cli.print_info("Writing to stdout: success");
-            }
-        }
-        Err(e) => return Err(format!("ow.write() error:\n{e}")),
-    }
-
-    //Print last bit of debug data
-    //TODO: fix descrepency!!!
-
-    cli.print_infol(format!(
-        "Successfully got {} element{}, in {}",
-        get_safe!(ELEMENTS_COUNT),
-        if get_safe!(ELEMENTS_COUNT) == 1 {
-            ""
-        } else {
-            "s"
-        },
-        convert_time(start.elapsed().unwrap().as_secs_f64())
-    ));
-
-    let diff = get_safe!(NUM_COMMENTS) - get_safe!(ELEMENTS_COUNT);
-    if diff != 0 {
-        cli.print_infom(format!(
-            "Not all elements've been gotten, difference: {diff}"
-        ));
-    }
-    Ok(())
-}
+use std::{io::Write, sync::Arc, sync::Mutex};
 
 #[tokio::main]
 async fn main() {
@@ -212,27 +118,9 @@ async fn main() {
         .map_or_else(|_| cli.print_err("Failed to lock elements!"), |e| e.clone());
 
     //Sort elements (except the first one which is the parent element or the reddit post)
-    if elements.len() > 1 {
-        //Filter elements.
-        elements = match filter_elements(elements, cli.filter.clone(), vec![]) {
-            Some(o) => o.0,
-            None => cli.print_err("Error, no elements, after filtering."),
-        };
-        //Sort elements.
-        if elements.len() > 2 {
-            let mut elements_cp = Vec::from([elements.get(0).map_or_else(
-                || cli.print_err("Error, invalid elements!"),
-                std::clone::Clone::clone,
-            )]);
-            elements_cp.append(
-                &mut sort_elements(elements[1..elements.len() - 1].to_vec(), cli.sort_style)
-                    .unwrap_or_default(),
-            );
-            elements = elements_cp;
-        }
-    }
+    elements = utils::sort_elements_(elements,&cli);
 
-    if let Err(e) = write_to_output(&cli, &elements, start) {
+    if let Err(e) = utils::write_to_output(&cli, &elements, start) {
         cli.print_err(format!("Writing to output failed: {e}"));
     }
     if cli.delete_tmp {

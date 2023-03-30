@@ -8,7 +8,6 @@ use std::{
     time::SystemTime,
 };
 
-use console::style;
 use json::JsonValue;
 
 use crate::{cli::Verbosity, convert_time, request, utils::get_timestamp};
@@ -258,7 +257,7 @@ impl Element {
                 if get_safe!(ELEMENTS_COUNT) >= max_elements {
                     break;
                 }
-                //.If created element isn't empty (Ok) push it.
+                //If created element isn't empty (Ok) push it.
                 if let Some(o) = Self::create(child, max_elements) {
                     elements.push(o);
                 }

@@ -1,14 +1,13 @@
 extern crate tokio;
 
-use std::time::SystemTime;
-
 use async_recursion::async_recursion;
 use console::{style, StyledObject};
 use json::JsonValue;
+use std::{time::{self, SystemTime}, io::Write};
 
 use crate::{
-    cli::{ElementFilter, ElementFilterOp, ElementSort, CLI},
-    element::Element,
+    cli::{ElementFilter, ElementFilterOp, ElementSort, CLI, self},
+    element::{Element, FORMAT, Format, ELEMENTS_COUNT, NUM_COMMENTS}, output_writer::OutputWriter,
 };
 
 use rand::prelude::*;
@@ -31,11 +30,21 @@ pub async fn request(url: String, retries: Option<usize>) -> Result<reqwest::Res
     }
 }
 
-pub fn get_timestamp(get: bool) -> StyledObject<String>{
+pub fn get_timestamp(get: bool) -> StyledObject<String> {
     if get {
-        style(chrono::Local::now().format("[%H:%M:%S] ").to_string()).yellow().bold()
-    }else{
-        style("".to_owned())
+        let now = time::SystemTime::now()
+            .duration_since(time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs_f64();
+        style(format!(
+            "[{}.{}] ",
+            chrono::Local::now().format("%H:%M:%S"),
+            format!("{:.3}", now - now.floor()).replace("0.", "")
+        ))
+        .yellow()
+        .bold()
+    } else {
+        style(String::new())
     }
 }
 
@@ -165,6 +174,121 @@ pub fn filter_elements(
     Some((elements, req_elements))
 }
 
+pub fn write_to_output(
+    cli: &cli::CLI,
+    elements: &Vec<Element>,
+    start: SystemTime,
+) -> Result<(), String> {
+    //Set the default output to stdout
+    let mut output: Box<dyn Write> = Box::new(std::io::stdout());
+
+    //If user specified saving to a file.
+    //Change the output to the file.
+    if cli.save_to_file {
+        output = match std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(cli.save_path.clone())
+        {
+            Ok(o) => Box::new(o),
+            Err(e) => return Err(format!("Failed to open file with error: {e}")),
+        };
+        cli.print_info(format!("Writing to {}: ", cli.save_path));
+    }
+    let mut ow = OutputWriter::new();
+    ow = ow.set_output(output);
+
+    //Write begining of the file:
+    match get_safe!(FORMAT) {
+        Format::Default => {
+            ow.content += &format!(
+                "# {{indent}} {{ups}} {{author}}: {{contnet}}\n\nSource: {}",
+                cli.base_url
+            );
+        }
+        Format::HTML => {
+            ow.content += &include_str!("html_file.html").replace("{title}", &cli.base_url);
+        }
+        Format::JSON => ow.content += "{\"data\":[",
+    }
+
+    //Write every element to the output.
+    //For formatting see element.rs:
+    //                   impl std::fmt::Debug for Element
+    for elem in elements {
+        ow.content += &format!("{elem}");
+    }
+
+    //Write the end:
+    match get_safe!(FORMAT) {
+        Format::Default => {}
+        Format::HTML => ow.content += "\t</div>\n</body>\n</html>",
+        Format::JSON => {
+            if let Some(r) = ow.content.clone().strip_suffix(",\n") {
+                ow.content = r.to_owned();
+            }
+            ow.content += "\n]}";
+        }
+    }
+
+    match ow.write() {
+        Ok(_) => {
+            if cli.save_to_file {
+                cli.print_info("Success");
+            } else {
+                cli.print_info("Writing to stdout: success");
+            }
+        }
+        Err(e) => return Err(format!("ow.write() error:\n{e}")),
+    }
+
+    //Print last bit of debug data
+    //TODO: fix descrepency!!!
+
+    cli.print_infol(format!(
+        "Successfully got {} element{}, in {}",
+        get_safe!(ELEMENTS_COUNT),
+        if get_safe!(ELEMENTS_COUNT) == 1 {
+            ""
+        } else {
+            "s"
+        },
+        convert_time(start.elapsed().unwrap().as_secs_f64())
+    ));
+
+    let diff = get_safe!(NUM_COMMENTS) - get_safe!(ELEMENTS_COUNT);
+    if diff != 0 {
+        cli.print_infom(format!(
+            "Not all elements've been gotten, difference: {diff}"
+        ));
+    }
+    Ok(())
+}
+
+pub fn sort_elements_(mut elements: Vec<Element>,cli: &CLI) -> Vec<Element>{
+    if elements.len() > 1 {
+        //Filter elements.
+        elements = match filter_elements(elements, cli.filter.clone(), vec![]) {
+            Some(o) => o.0,
+            None => cli.print_err("Error, no elements, after filtering."),
+        };
+        //Sort elements.
+        if elements.len() > 2 {
+            let mut elements_cp = Vec::from([elements.get(0).map_or_else(
+                || cli.print_err("Error, invalid elements!"),
+                std::clone::Clone::clone,
+            )]);
+            elements_cp.append(
+                &mut sort_elements(elements[1..elements.len() - 1].to_vec(), cli.sort_style)
+                    .unwrap_or_default(),
+            );
+            elements = elements_cp;
+        }
+    }
+    elements
+}
+
 pub fn sort_elements(
     mut elements: Vec<Element>,
     sort_style: ElementSort,
@@ -205,14 +329,14 @@ pub fn sort_elements(
 
 pub fn delete_tmp() -> Result<(), String> {
     if std::fs::remove_dir_all(TMP_DIR).is_err() {
-        return Err(String::from("Failed to delete temp files directory!"));
+        return Err(String::from("Failed to delete temp files!"));
     }
     Ok(())
 }
 
 pub async fn init() -> (CLI, JsonValue) {
     let args: Vec<String> = std::env::args().collect();
-    let start = SystemTime::now();
+    let start = time::SystemTime::now();
     let cli = crate::cli::CLI::new(&args);
 
     cli.print_info("Initialising CLI: success");
