@@ -166,6 +166,7 @@ impl std::fmt::Display for Element {
 
 impl Element {
     //Only intended for testing.
+    #[cfg(test)]
     pub fn new(
         author: String,
         data: String,

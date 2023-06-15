@@ -17,9 +17,9 @@ use std::{io::Write, sync::Arc, sync::Mutex};
 
 #[tokio::main]
 async fn main() {
-    let (cli, json_data) = utils::init().await;
-
     let start = std::time::SystemTime::now();
+
+    let (cli, json_data) = utils::init().await;
 
     let elements = Element::init(&json_data, cli.max_comments);
 
@@ -126,4 +126,5 @@ async fn main() {
             cli.print_warning(e);
         }
     }
+    cli.print_info(format!("Done in {:?}", start.elapsed().unwrap()));
 }

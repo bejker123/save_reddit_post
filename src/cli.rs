@@ -1,4 +1,4 @@
-use std::{fmt::Display, process::exit};
+use std::{fmt::Display, io::Write, process::exit};
 
 use console::style;
 
@@ -98,6 +98,22 @@ impl CLI {
             style("CLI").bold(),
             style("INFO").bold().green()
         );
+    }
+
+    fn print_info_nn_<T: Display>(&self, info: T) {
+        print!(
+            "{}[{}::{}] {info}",
+            crate::utils::get_timestamp(self.print_timestamps),
+            style("CLI").bold(),
+            style("INFO").bold().green()
+        );
+        std::io::stdout().flush().unwrap();
+    }
+
+    pub fn print_info_nn<T: Display>(&self, info: T) {
+        if self.verbosity == Verbosity::High {
+            self.print_info_nn_(info);
+        }
     }
 
     pub fn print_info<T: Display>(&self, info: T) {

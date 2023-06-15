@@ -9,7 +9,7 @@ use std::{
 };
 
 use crate::{
-    cli::{self, ElementFilter, ElementFilterOp, ElementSort, CLI},
+    cli::{self, ElementFilter, ElementFilterOp, ElementSort, Verbosity, CLI},
     element::{Element, Format, ELEMENTS_COUNT, FORMAT, NUM_COMMENTS},
     output_writer::OutputWriter,
 };
@@ -203,7 +203,7 @@ pub fn write_to_output(
             Ok(o) => Box::new(o),
             Err(e) => return Err(format!("Failed to open file with error: {e}")),
         };
-        cli.print_info(format!("Writing to {}: ", cli.save_path));
+        cli.print_info_nn(format!("Writing to {}: ", cli.save_path));
     }
     let mut ow = OutputWriter::new();
     ow = ow.set_output(output);
@@ -243,10 +243,12 @@ pub fn write_to_output(
 
     match ow.write() {
         Ok(_) => {
-            if cli.save_to_file {
-                cli.print_info("Success");
-            } else {
-                cli.print_info("Writing to stdout: success");
+            if cli.verbosity == Verbosity::High {
+                if cli.save_to_file {
+                    println!("Success");
+                } else {
+                    println!("Writing to stdout: success");
+                }
             }
         }
         Err(e) => return Err(format!("ow.write() error:\n{e}")),
@@ -266,11 +268,9 @@ pub fn write_to_output(
         convert_time(start.elapsed().unwrap().as_secs_f64())
     ));
 
-    let diff = get_safe!(NUM_COMMENTS) as i32 - get_safe!(ELEMENTS_COUNT) as i32;
+    let diff = (get_safe!(NUM_COMMENTS) as i32 - get_safe!(ELEMENTS_COUNT) as i32).abs();
     if diff != 0 {
-        cli.print_infom(format!(
-            "Not all elements've been gotten, difference: {diff}"
-        ));
+        cli.print_info(format!("Difference: {diff}"));
     }
     Ok(())
 }
