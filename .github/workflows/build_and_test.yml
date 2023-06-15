@@ -53,5 +53,5 @@ jobs:
         uses: ATiltedTree/setup-rust@v1
         with:
           rust-version: ${{ matrix.rust }}
-      - name: Build | Compile
+      - name: Build | Compile | Test
         run: cargo test
