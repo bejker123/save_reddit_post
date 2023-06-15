@@ -3,21 +3,30 @@ extern crate tokio;
 use async_recursion::async_recursion;
 use console::{style, StyledObject};
 use json::JsonValue;
-use std::{time::{self, SystemTime}, io::Write};
+use std::{
+    io::Write,
+    time::{self, SystemTime},
+};
 
 use crate::{
-    cli::{ElementFilter, ElementFilterOp, ElementSort, CLI, self},
-    element::{Element, FORMAT, Format, ELEMENTS_COUNT, NUM_COMMENTS}, output_writer::OutputWriter,
+    cli::{self, ElementFilter, ElementFilterOp, ElementSort, CLI},
+    element::{Element, Format, ELEMENTS_COUNT, FORMAT, NUM_COMMENTS},
+    output_writer::OutputWriter,
 };
 
 use rand::prelude::*;
 
 pub const TMP_DIR: &str = "tmp/";
 
+const USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/114.0";
+
 #[async_recursion]
 pub async fn request(url: String, retries: Option<usize>) -> Result<reqwest::Response, String> {
     let retries = retries.unwrap_or(0);
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .user_agent(USER_AGENT)
+        .build()
+        .or(Err(String::from("Failed to build client.")))?;
     match client.get(url.clone()).send().await {
         Ok(o) => Ok(o),
         Err(e) => {
@@ -257,7 +266,7 @@ pub fn write_to_output(
         convert_time(start.elapsed().unwrap().as_secs_f64())
     ));
 
-    let diff = get_safe!(NUM_COMMENTS) - get_safe!(ELEMENTS_COUNT);
+    let diff = get_safe!(NUM_COMMENTS) as i32 - get_safe!(ELEMENTS_COUNT) as i32;
     if diff != 0 {
         cli.print_infom(format!(
             "Not all elements've been gotten, difference: {diff}"
@@ -266,7 +275,7 @@ pub fn write_to_output(
     Ok(())
 }
 
-pub fn sort_elements_(mut elements: Vec<Element>,cli: &CLI) -> Vec<Element>{
+pub fn sort_elements_(mut elements: Vec<Element>, cli: &CLI) -> Vec<Element> {
     if elements.len() > 1 {
         //Filter elements.
         elements = match filter_elements(elements, cli.filter.clone(), vec![]) {
@@ -359,8 +368,9 @@ pub async fn init() -> (CLI, JsonValue) {
     );
 
     let json_data = json::parse(&data).map_or_else(
-        |_| {
-            CLI::print_err_no_timestamp("Parsing to JSON error!");
+        |e| {
+            println!("{data}");
+            CLI::print_err_no_timestamp(format!("Parsing to JSON error: {e}"));
         },
         |o| {
             cli.print_info("Parsing to JSON: success");

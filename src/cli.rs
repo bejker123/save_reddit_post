@@ -557,6 +557,7 @@ impl CLI {
         }
     }
 
+    //TODO: Make this return a result, for easier testing.
     pub fn parse_url(mut url: String) -> (String, String) {
         //If it's not a reddit url it's concidered invalid
         if !url.contains("reddit.com/r/") {

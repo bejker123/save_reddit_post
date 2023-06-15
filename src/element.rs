@@ -47,7 +47,7 @@ macro_rules! get_data_wrapper {
 }
 
 //TODO: add better debug formatting
-#[derive(Clone)]
+#[derive(Clone, Debug, Default)]
 pub struct Element {
     pub author: String,
     data: String,
@@ -165,6 +165,39 @@ impl std::fmt::Display for Element {
 }
 
 impl Element {
+    //Only intended for testing.
+    pub fn new(
+        author: String,
+        data: String,
+        kind: String,
+        url: String, //url_overridden_by_dest
+        ups: usize,
+        children: Vec<Element>,
+        depth: String,
+        permalink: String,
+        id: String,
+        parent_id: String,
+        over_18: bool,
+        created: usize,
+        edited: usize,
+    ) -> Self {
+        Self {
+            author,
+            data,
+            kind,
+            url,
+            ups,
+            children,
+            depth,
+            permalink,
+            id,
+            parent_id,
+            over_18,
+            created,
+            edited,
+        }
+    }
+
     pub fn create(child: &JsonValue, max_elements: usize) -> Option<Self> {
         if get_safe!(ELEMENTS_COUNT) >= max_elements {
             return None;

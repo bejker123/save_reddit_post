@@ -2,3 +2,5 @@
 *.tmp
 output.*
 tmp/
+flamegraph.*
+perf.*

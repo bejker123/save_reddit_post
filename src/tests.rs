@@ -1,20 +1,23 @@
 #![cfg(test)]
+use rand::{distributions::Alphanumeric, prelude::*};
 
 #[path = "cli.rs"]
 mod cli;
 use cli::CLI;
 
-use crate::{element::FORMAT, utils};
+use crate::{
+    element::{Element, FORMAT},
+    utils,
+};
 
 fn st(x: &str) -> String {
-    x.to_string()
+    x.into()
 }
 
-const USIZE_MAX: usize = usize::MAX;
 const CLI_ELEMENT_FILTER_DEF: cli::ElementFilter = cli::ElementFilter::Default;
 const CLI_ELEMENT_SORT_DEF: cli::ElementSort = cli::ElementSort::Default;
 
-//TODO: add more
+//TODO: add more tests
 #[test]
 fn test_element() {
     unsafe {
@@ -25,7 +28,7 @@ fn test_element() {
 
     let json_data = json::parse(data).unwrap();
 
-    let elements = crate::element::Element::init(&json_data, USIZE_MAX);
+    let elements = crate::element::Element::init(&json_data, usize::MAX);
     let mut output = std::fs::OpenOptions::new()
         .create(true)
         .write(true)
@@ -77,7 +80,7 @@ fn test_cli() {
             base_url: st("https://reddit.com/r/asd/"),
             save_to_file: true,
             save_path: st("test-path.txt"),
-            max_comments: USIZE_MAX,
+            max_comments: usize::MAX,
             filter: CLI_ELEMENT_FILTER_DEF,
             sort_style: CLI_ELEMENT_SORT_DEF,
             save_tmp_files: false,
@@ -100,7 +103,7 @@ fn test_cli() {
             base_url: st("https://reddit.com/r/"),
             save_to_file: false,
             save_path: st("test-path.txt"),
-            max_comments: USIZE_MAX,
+            max_comments: usize::MAX,
             filter: CLI_ELEMENT_FILTER_DEF,
             sort_style: CLI_ELEMENT_SORT_DEF,
             save_tmp_files: false,
@@ -117,7 +120,7 @@ fn test_cli() {
             base_url: st("https://reddit.com/r/"),
             save_to_file: false,
             save_path: st("output.txt"),
-            max_comments: USIZE_MAX,
+            max_comments: usize::MAX,
             filter: CLI_ELEMENT_FILTER_DEF,
             sort_style: CLI_ELEMENT_SORT_DEF,
             save_tmp_files: false,
@@ -140,7 +143,7 @@ fn test_cli() {
             base_url: st("https://reddit.com/r/"),
             save_to_file: false,
             save_path: st("output.txt"),
-            max_comments: USIZE_MAX,
+            max_comments: usize::MAX,
             filter: CLI_ELEMENT_FILTER_DEF,
             sort_style: CLI_ELEMENT_SORT_DEF,
             save_tmp_files: true,
@@ -587,5 +590,115 @@ fn test_utils_convert_time() {
     assert_eq!(
         utils::convert_time(1000000.789),
         String::from("277h 46min 40.79s")
+    );
+}
+
+fn rnd_str(rng: &mut ThreadRng) -> String {
+    rng.sample_iter(&Alphanumeric)
+        .take(7)
+        .map(char::from)
+        .collect()
+}
+
+fn ups_sorted_elements_list(n: usize) -> Vec<Element> {
+    let mut rng = rand::thread_rng();
+
+    let mut out = Vec::new();
+    let mut ups = 0usize;
+    for _ in 0..=n {
+        ups += rng.gen_range(1..10);
+        out.push(Element::new(
+            st(""),
+            st(""),
+            st(""),
+            st(""),
+            ups,
+            vec![],
+            st(""),
+            st(""),
+            st(""),
+            st(""),
+            false,
+            0,
+            1,
+        ));
+    }
+
+    out
+}
+
+//This way it's easier to tell which test function fails.
+macro_rules! test_wrap {
+    ($fn: tt, $ev: expr, $ans: expr) => {
+        #[test]
+        fn $fn() {
+            assert_eq!($ev, $ans);
+        }
+    };
+}
+
+// test_wrap!(
+//     parse_url_rng,
+//     {
+//         let mut rng = rand::thread_rng();
+//         CLI::parse_url(rnd_str(&mut rng))
+//     },
+//     (st(""), st(""))
+// );
+test_wrap!(
+    sort_elements_empty,
+    utils::sort_elements(vec![], crate::cli::ElementSort::Default),
+    Err(st("elements empty"))
+);
+
+test_wrap!(
+    sort_elements_one,
+    utils::sort_elements(vec![Element::default()], crate::cli::ElementSort::Default),
+    Ok(vec![Element::default()])
+);
+
+test_wrap!(
+    filter_elements_empty,
+    utils::filter_elements(vec![], crate::cli::ElementFilter::Default, vec![]),
+    None
+);
+
+test_wrap!(
+    filter_elements_one,
+    utils::filter_elements(
+        vec![Element::default()],
+        crate::cli::ElementFilter::Default,
+        vec![]
+    ),
+    Some((vec![Element::default()], Vec::new()))
+);
+
+#[test]
+fn test_sort_elements_rng() {
+    // author: String,
+    // data: String,
+    // kind: String,
+    // url: String, //url_overridden_by_dest
+    // ups: usize,
+    // children: Vec<Element>,
+    // depth: String,
+    // permalink: String,
+    // id: String,
+    // parent_id: String,
+    // over_18: bool,
+    // created: usize,
+    // edited: usize,
+
+    let sorted = ups_sorted_elements_list(10);
+    assert_eq!(
+        utils::sort_elements(sorted.clone(), crate::cli::ElementSort::Upvotes(true)),
+        Ok(sorted)
+    );
+    let sorted = ups_sorted_elements_list(10000);
+    let mut sorted_rev = sorted.clone();
+    sorted_rev.reverse();
+    assert_eq!(
+        utils::sort_elements(sorted.clone(), crate::cli::ElementSort::Upvotes(false)),
+        Ok(sorted_rev)
     );
 }

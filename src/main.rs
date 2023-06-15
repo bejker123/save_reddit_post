@@ -3,9 +3,7 @@ extern crate tokio;
 #[macro_use]
 mod element;
 
-use element::{
-    Element, ELEMENTS_COUNT, MORE_ELEMENTS, MORE_ELEMENTS_COUNT,
-};
+use element::{Element, ELEMENTS_COUNT, MORE_ELEMENTS, MORE_ELEMENTS_COUNT};
 
 mod cli;
 mod output_writer;
@@ -118,7 +116,7 @@ async fn main() {
         .map_or_else(|_| cli.print_err("Failed to lock elements!"), |e| e.clone());
 
     //Sort elements (except the first one which is the parent element or the reddit post)
-    elements = utils::sort_elements_(elements,&cli);
+    elements = utils::sort_elements_(elements, &cli);
 
     if let Err(e) = utils::write_to_output(&cli, &elements, start) {
         cli.print_err(format!("Writing to output failed: {e}"));
