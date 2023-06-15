@@ -47,7 +47,7 @@ macro_rules! get_data_wrapper {
 }
 
 //TODO: add better debug formatting
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Element {
     pub author: String,
     data: String,
@@ -62,6 +62,27 @@ pub struct Element {
     over_18: bool,
     pub created: usize,
     pub edited: usize,
+}
+
+#[cfg(test)]
+impl Default for Element {
+    fn default() -> Self {
+        Self {
+            author: String::from("DEF_AUTHOR"),
+            data: String::from("DEF_DATA"),
+            kind: String::from("DEF_KIND"),
+            url: String::from("DEF_URL"),
+            ups: 0,
+            children: Vec::new(),
+            depth: String::from("DEF_DEPTH"),
+            permalink: String::from("DEF_PERMALINK"),
+            id: String::from("DEF_ID"),
+            parent_id: String::from("DEF_PARENT_ID"),
+            over_18: Default::default(),
+            created: Default::default(),
+            edited: Default::default(),
+        }
+    }
 }
 
 impl PartialEq for Element {

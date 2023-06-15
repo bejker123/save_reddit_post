@@ -674,6 +674,46 @@ test_wrap!(
     Some((vec![Element::default()], Vec::new()))
 );
 
+test_wrap!(
+    filter_elements_ups,
+    utils::filter_elements(
+        vec![Element::default()],
+        crate::cli::ElementFilter::Upvotes(crate::cli::ElementFilterOp::Eq(0)),
+        Vec::new()
+    ),
+    Some((vec![Element::default()], vec![st("DEF_PARENT_ID")]))
+);
+
+test_wrap!(
+    filter_elements_ups_ne,
+    utils::filter_elements(
+        vec![Element::default()],
+        crate::cli::ElementFilter::Upvotes(crate::cli::ElementFilterOp::NotEq(0)),
+        Vec::new()
+    ),
+    Some((Vec::new(), Vec::new()))
+);
+
+test_wrap!(
+    filter_elements_ups_lt,
+    utils::filter_elements(
+        vec![Element::default()],
+        crate::cli::ElementFilter::Upvotes(crate::cli::ElementFilterOp::Less(0)),
+        Vec::new()
+    ),
+    Some((Vec::new(), Vec::new()))
+);
+
+test_wrap!(
+    filter_elements_ups_lte,
+    utils::filter_elements(
+        vec![Element::default()],
+        crate::cli::ElementFilter::Upvotes(crate::cli::ElementFilterOp::LessEq(0)),
+        Vec::new()
+    ),
+    Some((vec![Element::default()], vec![st("DEF_PARENT_ID")]))
+);
+
 #[test]
 fn test_sort_elements_rng() {
     // author: String,
