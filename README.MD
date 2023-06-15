@@ -34,7 +34,7 @@ It will go through many changes in the future!
 
 - [x] Add url validation
 - [x] Add getting all comments on a post 
-- [x] Add formatting, ex. HTML
+- [x] Add formatting, ex. HTML, JSON
 - [x] Add safe wrappers for static mut members 
 - [ ] Add more command line options
   - [x] max comments count 

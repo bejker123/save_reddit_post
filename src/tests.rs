@@ -593,12 +593,12 @@ fn test_utils_convert_time() {
     );
 }
 
-fn rnd_str(rng: &mut ThreadRng) -> String {
-    rng.sample_iter(&Alphanumeric)
-        .take(7)
-        .map(char::from)
-        .collect()
-}
+// fn rnd_str(rng: &mut ThreadRng) -> String {
+//     rng.sample_iter(&Alphanumeric)
+//         .take(7)
+//         .map(char::from)
+//         .collect()
+// }
 
 fn ups_sorted_elements_list(n: usize) -> Vec<Element> {
     let mut rng = rand::thread_rng();
@@ -645,6 +645,7 @@ macro_rules! test_wrap {
 //     },
 //     (st(""), st(""))
 // );
+
 test_wrap!(
     sort_elements_empty,
     utils::sort_elements(vec![], crate::cli::ElementSort::Default),

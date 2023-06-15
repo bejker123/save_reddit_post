@@ -61,6 +61,7 @@ pub enum ElementFilter {
     Edited(bool),
 }
 
+#[allow(dead_code)]
 impl CLI {
     pub fn print_err<T: Display>(&self, err: T) -> ! {
         println!(
