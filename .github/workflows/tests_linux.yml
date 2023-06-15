@@ -1,8 +1,7 @@
-#TODO: implement workflows for windows.
-name: Build
+name: Tests Linux
 on: [push]
 jobs:
-  Build:
+  Test:
     runs-on: ubuntu-latest
     steps:
       - name: Install cargo
@@ -18,4 +17,4 @@ jobs:
       - name: Run tests
         run: |
           cd  ${{ github.workspace }}
-          cargo build
+          cargo test
