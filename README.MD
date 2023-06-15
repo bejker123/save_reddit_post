@@ -1,5 +1,4 @@
-![Build Badge](https://github.com/bejker123/save_reddit_post/actions/workflows/build.yml/badge.svg)
-![Tests Badge](https://github.com/bejker123/save_reddit_post/actions/workflows/tests.yml/badge.svg)
+![Build Badge](https://github.com/bejker123/save_reddit_post/actions/workflows/build_and_test.yml/badge.svg)
 
 # SRP
 

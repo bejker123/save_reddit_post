@@ -1,5 +1,5 @@
 #Source: https://github.com/marketplace/actions/setup-rust
-name: Build and test on ubuntu, windows and macOS
+name: Build and Test #on ubuntu, windows and macOS
 
 on:
   push:
