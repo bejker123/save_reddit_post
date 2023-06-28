@@ -14,11 +14,10 @@ impl OutputWriter {
             content: String::new(),
         }
     }
-    pub fn set_output(mut self, output: Box<dyn Write>) -> Self {
+    pub fn set_output(&mut self, output: Box<dyn Write>) {
         self.output = output;
-        self
     }
-    pub fn write(mut self) -> std::io::Result<()> {
+    pub fn write(&mut self) -> std::io::Result<()> {
         write!(self.output, "{}", self.content)
     }
 }

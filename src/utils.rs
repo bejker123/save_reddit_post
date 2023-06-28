@@ -206,7 +206,7 @@ pub fn write_to_output(
         cli.print_info_nn(format!("Writing to {}: ", cli.save_path));
     }
     let mut ow = OutputWriter::new();
-    ow = ow.set_output(output);
+    ow.set_output(output);
 
     //Write begining of the file:
     match get_safe!(FORMAT) {
@@ -251,7 +251,7 @@ pub fn write_to_output(
                 }
             }
         }
-        Err(e) => return Err(format!("ow.write() error:\n{e}")),
+        Err(e) => return Err(format!("Failed to write to output with error:\n{e}")),
     }
 
     //Print last bit of debug data
@@ -337,9 +337,7 @@ pub fn sort_elements(
 }
 
 pub fn delete_tmp() -> Result<(), String> {
-    if std::fs::remove_dir_all(TMP_DIR).is_err() {
-        return Err(String::from("Failed to delete temp files!"));
-    }
+    std::fs::remove_dir_all(TMP_DIR).map_err(|_| String::from("Failed to delete temp files!"))?;
     Ok(())
 }
 

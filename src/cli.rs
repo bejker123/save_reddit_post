@@ -266,7 +266,6 @@ impl CLI {
             "old" => ElementSort::Date(true),
             "edited" => ElementSort::EditedDate(false),
             "edited-asc" => ElementSort::EditedDate(true),
-            //for adding more: "tmp"=>ElementSort::tmp,
             _ => {
                 println!("Invalid sort option: {sort_style_}");
                 Self::help(true);
@@ -428,7 +427,7 @@ impl CLI {
         let mut save_path = String::from("output.txt");
         let mut max_comments = usize::MAX;
         let mut sort_style = ElementSort::Default;
-        let mut filter = ElementFilter::Default; //ElementFilter::Comments(ElementFilterOp::Grater(1));//ElementFilter::Edited(false);//ElementFilter::Author(ElementFilterOp::NotEqString(String::from("funambula")));
+        let mut filter = ElementFilter::Default;
         let mut save_tmp_files = false;
         let mut verbosity = Verbosity::default();
         let mut req_more_elements = true;
