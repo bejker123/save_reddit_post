@@ -397,6 +397,7 @@ impl CLI {
             }
             "edited" => {
                 let Some(operator) = operator else { return Err("Failed to get filter style operator".to_owned()) };
+                skip_count += 1;
                 let operator = operator.to_lowercase();
                 if operator.trim() == "false" {
                     filter = ElementFilter::Edited(false);
@@ -407,6 +408,7 @@ impl CLI {
             "author" => {
                 let Some(value) = value else { return Err("Failed to get filter style value".to_owned()) };
                 let Some(operator) = operator else { return Err("Failed to get filter style operator".to_owned()) };
+                skip_count += 2;
                 let operator = operator.to_lowercase();
                 if operator.trim() == "==" {
                     filter = ElementFilter::Author(ElementFilterOp::EqString(value.clone()));
