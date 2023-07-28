@@ -1,6 +1,6 @@
 [package]
 name = "srp" #save_reddit_post
-version = "0.3.13"
+version = "0.3.14"
 edition = "2021"
 repository = "https://github.com/bejker123/save_reddit_post"
 license-file = "LICENSE.MD"

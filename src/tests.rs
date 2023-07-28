@@ -330,12 +330,12 @@ fn test_cli_parse_filter_style() {
     assert_eq!(
         cli::CLI::parse_filter_style(&String::from("edited"), Some(&String::from("true")), None)
             .unwrap(),
-        (0, cli::ElementFilter::Edited(true))
+        (1, cli::ElementFilter::Edited(true))
     );
     assert_eq!(
         cli::CLI::parse_filter_style(&String::from("edited"), Some(&String::from("false")), None)
             .unwrap(),
-        (0, cli::ElementFilter::Edited(false))
+        (1, cli::ElementFilter::Edited(false))
     );
 
     //Author
@@ -347,7 +347,7 @@ fn test_cli_parse_filter_style() {
         )
         .unwrap(),
         (
-            0,
+            2,
             cli::ElementFilter::Author(cli::ElementFilterOp::EqString(String::from("test")))
         )
     );
@@ -359,7 +359,7 @@ fn test_cli_parse_filter_style() {
         )
         .unwrap(),
         (
-            0,
+            2,
             cli::ElementFilter::Author(cli::ElementFilterOp::NotEqString(String::from("test")))
         )
     );
@@ -541,19 +541,19 @@ fn test_cli_parse_filter_style() {
             None
         )
         .unwrap(),
-        (0, cli::ElementFilter::Edited(true))
+        (1, cli::ElementFilter::Edited(true))
     );
 
     assert_eq!(
         cli::CLI::parse_filter_style(&String::from("EDITED"), Some(&String::from("TruE")), None)
             .unwrap(),
-        (0, cli::ElementFilter::Edited(true))
+        (1, cli::ElementFilter::Edited(true))
     );
 
     assert_eq!(
         cli::CLI::parse_filter_style(&String::from("EDITED"), Some(&String::from("FAlSe")), None)
             .unwrap(),
-        (0, cli::ElementFilter::Edited(false))
+        (1, cli::ElementFilter::Edited(false))
     );
 
     //Test invalid params
