@@ -25,9 +25,8 @@ async fn main() {
 
     if elements.is_empty() {
         cli.print_err("Parsing to elements: fail.");
-    } else {
-        cli.print_info("Parsing to elements: success.");
     }
+    cli.print_info("Parsing to elements: success.");
 
     let more_start = std::time::SystemTime::now();
 
