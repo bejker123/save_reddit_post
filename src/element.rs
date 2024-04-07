@@ -8,6 +8,7 @@ use std::{
     time::SystemTime,
 };
 
+use console::style;
 use json::JsonValue;
 
 use crate::{cli::Verbosity, convert_time, request, utils::get_timestamp};
@@ -328,7 +329,9 @@ impl Element {
                 if get_safe!(ELEMENTS_COUNT) >= max_elements {
                     break;
                 }
-                let Some(element) = Self::create(child, max_elements) else {continue};
+                let Some(element) = Self::create(child, max_elements) else {
+                    continue;
+                };
 
                 out.push(element);
             }
@@ -379,7 +382,7 @@ impl Element {
         if get_safe!(ELEMENTS_COUNT) >= max_comments {
             return None;
         }
-        let Ok(res) = request(base_url.clone(), None).await else{
+        let Ok(res) = request(base_url.clone(), None).await else {
             //TODO: add retrying
             todo!()
         };
@@ -417,7 +420,9 @@ impl Element {
 
             //Format the line to be printed
             let mut line = format!(
-                "{}{idx_} / {} {:.2}% runtime: {} ETA: {}",
+                "[{}::{}] {}{idx_} / {} {:.2}% runtime: {} ETA: {}",
+                style("CLI").bold(),
+                style("INFO").bold().green(),
                 get_timestamp(print_timestamps),
                 get_safe!(MORE_ELEMENTS).len(),
                 precent,
