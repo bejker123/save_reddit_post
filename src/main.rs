@@ -76,6 +76,7 @@ async fn main() {
                         last_line_length,
                         elements,
                         cli.max_comments,
+                        0,
                     )
                     .await
                     {

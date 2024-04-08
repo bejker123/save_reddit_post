@@ -369,6 +369,7 @@ impl Element {
         }
     }
 
+    #[async_recursion::async_recursion]
     pub async fn get_more_element(
         verbosity: &Verbosity,
         print_timestamps: bool,
@@ -378,17 +379,48 @@ impl Element {
         last_line_length: Arc<Mutex<usize>>,
         elements: Arc<Mutex<Vec<Self>>>,
         max_comments: usize,
+        mut retries: usize,
     ) -> Option<String> {
         if get_safe!(ELEMENTS_COUNT) >= max_comments {
             return None;
         }
         let Ok(res) = request(base_url.clone(), None).await else {
-            //TODO: add retrying
-            todo!()
+            if retries < 3 {
+                retries += 1;
+                return Self::get_more_element(
+                    verbosity,
+                    print_timestamps,
+                    base_url,
+                    idx,
+                    more_start,
+                    last_line_length,
+                    elements,
+                    max_comments,
+                    retries,
+                )
+                .await;
+            }
+            return None;
         };
 
-        //TODO: add retrying
-        let Ok(data) = res.text().await else { todo!() };
+        let Ok(data) = res.text().await else {
+            if retries < 3 {
+                retries += 1;
+                return Self::get_more_element(
+                    verbosity,
+                    print_timestamps,
+                    base_url,
+                    idx,
+                    more_start,
+                    last_line_length,
+                    elements,
+                    max_comments,
+                    retries,
+                )
+                .await;
+            }
+            return None;
+        };
 
         let json_data = match json::parse(&data) {
             Ok(o) => o,
